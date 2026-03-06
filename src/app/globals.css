@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --mali-green: #009B4D;
+  --mali-gold: #FFB800;
+  --mali-dark: #1A1A2E;
+  --mali-navy: #16213E;
+  --mali-blue: #0F3460;
+  --mali-red: #E94560;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1A1A2E;
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-mali-green to-mali-gold;
+  }
+}

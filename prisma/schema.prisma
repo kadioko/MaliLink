@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ────────────────────────────────────────────
+
+enum UserRole {
+  IMPORTER
+  SUPPLIER
+  ADMIN
+}
+
+enum KYCStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String    @unique
+  passwordHash  String
+  name          String
+  businessName  String
+  role          UserRole
+  kycStatus     KYCStatus @default(PENDING)
+  tinNumber     String?   // Tanzania TIN
+  businessLicense String?
+  location      String?   // e.g. "Kariakoo, Dar es Salaam"
+  whatsappId    String?   @unique // WhatsApp phone for bot
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  importerOrders  Order[]        @relation("ImporterOrders")
+  supplierOrders  Order[]        @relation("SupplierOrders")
+  products        Product[]
+  creditAsLender  CreditLine[]   @relation("Lender")
+  creditAsBorrower CreditLine[]  @relation("Borrower")
+  payments        Payment[]
+  sentMessages    Message[]      @relation("Sender")
+  receivedMessages Message[]     @relation("Receiver")
+  whatsappSessions WhatsAppSession[]
+  notifications   Notification[]
+  supplierListing SupplierListing?
+
+  @@map("users")
+}
+
+// ─── Supplier Listings (paid placement) ─────────────────────
+
+enum ListingTier {
+  FREE
+  BASIC
+  PREMIUM
+  FEATURED
+}
+
+model SupplierListing {
+  id          String      @id @default(cuid())
+  supplierId  String      @unique
+  supplier    User        @relation(fields: [supplierId], references: [id])
+  tier        ListingTier @default(FREE)
+  description String?
+  categories  String[]    // e.g. ["electronics", "textiles", "machinery"]
+  origin      String?     // e.g. "Guangzhou, China"
+  minOrder    Float?      // Minimum order value in USD
+  leadTimeDays Int?
+  rating      Float       @default(0)
+  reviewCount Int         @default(0)
+  monthlyFee  Float       @default(0)
+  isActive    Boolean     @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("supplier_listings")
+}
+
+// ─── Product Catalog ────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  supplierId  String
+  supplier    User     @relation(fields: [supplierId], references: [id])
+  name        String
+  nameSwahili String?  // Swahili product name for WhatsApp search
+  description String?
+  category    String
+  unit        String   // e.g. "carton", "piece", "kg", "bale"
+  priceUsd    Float
+  priceTzs    Float    // Tanzania Shillings
+  moq         Int      @default(1) // minimum order quantity
+  imageUrls   String[]
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems  OrderItem[]
+
+  @@index([category])
+  @@index([supplierId])
+  @@map("products")
+}
+
+// ─── Orders ─────────────────────────────────────────────────
+
+enum OrderStatus {
+  DRAFT
+  SUBMITTED
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  IN_CUSTOMS
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum OrderSource {
+  WEB
+  WHATSAPP
+  API
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique @default(cuid())
+  importerId    String
+  importer      User        @relation("ImporterOrders", fields: [importerId], references: [id])
+  supplierId    String
+  supplier      User        @relation("SupplierOrders", fields: [supplierId], references: [id])
+  status        OrderStatus @default(DRAFT)
+  source        OrderSource @default(WEB)
+  subtotalUsd   Float       @default(0)
+  shippingUsd   Float       @default(0)
+  dutyUsd       Float       @default(0)
+  totalUsd      Float       @default(0)
+  totalTzs      Float       @default(0)
+  exchangeRate  Float?      // USD/TZS rate at time of order
+  notes         String?
+  shippingRef   String?     // Shipping/tracking reference
+  customsRef    String?     // Customs clearance reference
+  estimatedDelivery DateTime?
+  confirmedAt   DateTime?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items         OrderItem[]
+  payments      Payment[]
+  creditLine    CreditLine?
+  messages      Message[]
+
+  @@index([importerId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  totalPrice Float
+
+  @@map("order_items")
+}
+
+// ─── Credit System ──────────────────────────────────────────
+
+enum CreditStatus {
+  REQUESTED
+  APPROVED
+  ACTIVE
+  OVERDUE
+  PAID
+  DEFAULTED
+  REJECTED
+}
+
+model CreditLine {
+  id            String       @id @default(cuid())
+  orderId       String       @unique
+  order         Order        @relation(fields: [orderId], references: [id])
+  lenderId      String       // Supplier extending credit
+  lender        User         @relation("Lender", fields: [lenderId], references: [id])
+  borrowerId    String       // Importer receiving credit
+  borrower      User         @relation("Borrower", fields: [borrowerId], references: [id])
+  amountUsd     Float
+  amountTzs     Float
+  interestRate  Float        @default(0) // monthly rate
+  status        CreditStatus @default(REQUESTED)
+  termDays      Int          @default(30)
+  dueDate       DateTime?
+  paidAmount    Float        @default(0)
+  approvedAt    DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  payments      Payment[]
+
+  @@index([lenderId])
+  @@index([borrowerId])
+  @@index([status])
+  @@map("credit_lines")
+}
+
+// ─── Payments ───────────────────────────────────────────────
+
+enum PaymentMethod {
+  MPESA
+  BANK_TRANSFER
+  CASH
+  CREDIT
+  TIGO_PESA
+  AIRTEL_MONEY
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  orderId         String?
+  order           Order?        @relation(fields: [orderId], references: [id])
+  creditLineId    String?
+  creditLine      CreditLine?   @relation(fields: [creditLineId], references: [id])
+  amountUsd       Float
+  amountTzs       Float
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  transactionRef  String?       @unique
+  mpesaReceiptNo  String?
+  platformFeeUsd  Float         @default(0) // 1.5% transaction fee
+  notes           String?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([orderId])
+  @@map("payments")
+}
+
+// ─── Messaging ──────────────────────────────────────────────
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+  orderId    String?
+  order      Order?   @relation(fields: [orderId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  source     String   @default("web") // "web" | "whatsapp"
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("messages")
+}
+
+// ─── WhatsApp Bot ───────────────────────────────────────────
+
+enum SessionState {
+  IDLE
+  BROWSING
+  ORDERING
+  CHECKING_ORDER
+  PAYING
+  SUPPORT
+}
+
+model WhatsAppSession {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  phoneNumber  String
+  state        SessionState @default(IDLE)
+  context      String?      // JSON blob for conversation context
+  lastActiveAt DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([userId, phoneNumber])
+  @@map("whatsapp_sessions")
+}
+
+// ─── Notifications ──────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  body      String
+  type      String   // "order_update" | "payment" | "credit" | "system"
+  isRead    Boolean  @default(false)
+  metadata  String?  // JSON
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
