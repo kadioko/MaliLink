@@ -1,4 +1,6 @@
+import { SessionState } from "@prisma/client";
 import { db } from "./db";
+import { formatTzs, formatTzsFromUsd, getUsdToTzsRate } from "./utils";
 
 interface WhatsAppMessage {
   from: string;
@@ -9,6 +11,25 @@ interface WhatsAppMessage {
 interface BotResponse {
   message: string;
   mediaUrl?: string;
+}
+
+interface SessionProduct {
+  id: string;
+  supplierId: string;
+  name: string;
+  price: number;
+  unit: string;
+  moq: number;
+}
+
+interface SessionContext {
+  action?: "search" | "categories";
+  step?: "select_supplier" | "select_product" | "quantity" | "confirm";
+  results?: string;
+  products?: SessionProduct[];
+  selectedProduct?: SessionProduct;
+  quantity?: number;
+  total?: number;
 }
 
 const MENU = `🇲🇱 *MaliLink - Kariakoo Trade Hub*
@@ -204,14 +225,21 @@ async function handleOrderingState(
     }
 
     let msg = "📦 *Products Found:*\n\n";
-    products.forEach((p, i) => {
-      msg += `${i + 1}. *${p.name}*\n   ${p.supplier.businessName}\n   💰 $${p.priceUsd} / ${p.unit} (MOQ: ${p.moq})\n\n`;
+    products.forEach((product: (typeof products)[number], index: number) => {
+      msg += `${index + 1}. *${product.name}*\n   ${product.supplier.businessName}\n   💰 ${formatTzsFromUsd(product.priceUsd)} / ${product.unit} (MOQ: ${product.moq})\n\n`;
     });
     msg += "Reply with number to order, or *0* to go back.";
 
     await updateSession(sessionId, "ORDERING", {
       step: "select_product",
-      products: products.map((p) => ({ id: p.id, supplierId: p.supplier.id, name: p.name, price: p.priceUsd, unit: p.unit, moq: p.moq })),
+      products: products.map((product: (typeof products)[number]) => ({
+        id: product.id,
+        supplierId: product.supplier.id,
+        name: product.name,
+        price: product.priceUsd,
+        unit: product.unit,
+        moq: product.moq,
+      })),
     });
 
     return { message: msg };
@@ -219,14 +247,15 @@ async function handleOrderingState(
 
   if (context?.step === "select_product") {
     const idx = parseInt(text) - 1;
-    if (idx >= 0 && idx < (context.products?.length || 0)) {
-      const product = context.products[idx];
+    const availableProducts = context.products ?? [];
+    if (idx >= 0 && idx < availableProducts.length) {
+      const product = availableProducts[idx];
       await updateSession(sessionId, "ORDERING", {
         step: "quantity",
         selectedProduct: product,
       });
       return {
-        message: `✅ *${product.name}* selected\n💰 $${product.price} per ${product.unit}\n📦 Minimum: ${product.moq}\n\nHow many ${product.unit}s do you want? (type a number)`,
+        message: `✅ *${product.name}* selected\n💰 ${formatTzsFromUsd(product.price)} per ${product.unit}\n📦 Minimum: ${product.moq}\n\nHow many ${product.unit}s do you want? (type a number)`,
       };
     }
     return { message: "Invalid selection. Reply with a valid number or *0* to go back." };
@@ -235,6 +264,10 @@ async function handleOrderingState(
   if (context?.step === "quantity") {
     const qty = parseInt(text);
     const product = context.selectedProduct;
+    if (!product) {
+      await resetSession(sessionId);
+      return { message: "Your order session expired. Type *3* to start a new order.\n\n" + MENU };
+    }
     if (isNaN(qty) || qty < product.moq) {
       return { message: `⚠️ Minimum order is ${product.moq} ${product.unit}s. Please enter a valid quantity.` };
     }
@@ -248,29 +281,39 @@ async function handleOrderingState(
     });
 
     return {
-      message: `📋 *Order Summary*\n\n📦 ${product.name}\n🔢 Quantity: ${qty} ${product.unit}s\n💰 Total: $${total.toFixed(2)}\n\nReply *CONFIRM* to place order or *0* to cancel.`,
+      message: `📋 *Order Summary*\n\n📦 ${product.name}\n🔢 Quantity: ${qty} ${product.unit}s\n💰 Total: ${formatTzsFromUsd(total)}\n\nReply *CONFIRM* to place order or *0* to cancel.`,
     };
   }
 
   if (context?.step === "confirm" && (text === "confirm" || text === "ndio" || text === "yes")) {
+    if (!context.selectedProduct || typeof context.total !== "number" || typeof context.quantity !== "number") {
+      await resetSession(sessionId);
+      return { message: "Your order session expired. Type *3* to start a new order.\n\n" + MENU };
+    }
+
+    const selectedProduct = context.selectedProduct;
+    const total = context.total;
+    const quantity = context.quantity;
+
     // Create the order
+    const exchangeRate = getUsdToTzsRate();
     const order = await db.order.create({
       data: {
         orderNumber: `ML${Date.now().toString(36).toUpperCase()}`,
         importerId: userId,
-        supplierId: context.selectedProduct.supplierId,
+        supplierId: selectedProduct.supplierId,
         source: "WHATSAPP",
-        subtotalUsd: context.total,
-        totalUsd: context.total,
-        totalTzs: context.total * 2500,
-        exchangeRate: 2500,
+        subtotalUsd: total,
+        totalUsd: total,
+        totalTzs: total * exchangeRate,
+        exchangeRate,
         status: "SUBMITTED",
         items: {
           create: {
-            productId: context.selectedProduct.id,
-            quantity: context.quantity,
-            unitPrice: context.selectedProduct.price,
-            totalPrice: context.total,
+            productId: selectedProduct.id,
+            quantity,
+            unitPrice: selectedProduct.price,
+            totalPrice: total,
           },
         },
       },
@@ -279,7 +322,7 @@ async function handleOrderingState(
     await resetSession(sessionId);
 
     return {
-      message: `🎉 *Oda imewekwa! / Order Placed!*\n\n📋 Order: ${order.orderNumber}\n💰 Total: $${context.total.toFixed(2)}\n📊 Status: Submitted\n\nYou'll receive updates here. Type *4* to check status anytime.\n\n` + MENU,
+      message: `🎉 *Oda imewekwa! / Order Placed!*\n\n📋 Order: ${order.orderNumber}\n💰 Total: ${formatTzsFromUsd(total)}\n📊 Status: Submitted\n\nYou'll receive updates here. Type *4* to check status anytime.\n\n` + MENU,
     };
   }
 
@@ -316,8 +359,8 @@ async function searchProducts(query: string, sessionId: string): Promise<BotResp
   }
 
   let msg = `🔍 *Results for "${query}":*\n\n`;
-  products.forEach((p, i) => {
-    msg += `${i + 1}. *${p.name}*\n   ${p.supplier.businessName}\n   💰 $${p.priceUsd} per ${p.unit}\n\n`;
+  products.forEach((product: (typeof products)[number], index: number) => {
+    msg += `${index + 1}. *${product.name}*\n   ${product.supplier.businessName}\n   💰 ${formatTzsFromUsd(product.priceUsd)} per ${product.unit}\n\n`;
   });
   msg += "Reply *3* to start ordering or *menu* for main menu.";
 
@@ -344,10 +387,10 @@ async function getOrderStatus(userId: string): Promise<BotResponse> {
   };
 
   let msg = "📋 *Your Active Orders:*\n\n";
-  orders.forEach((o) => {
-    msg += `${statusEmoji[o.status] || "📋"} *${o.orderNumber}*\n`;
-    msg += `   ${o.supplier.businessName}\n`;
-    msg += `   Status: ${o.status} | $${o.totalUsd.toFixed(2)}\n\n`;
+  orders.forEach((order: (typeof orders)[number]) => {
+    msg += `${statusEmoji[order.status] || "📋"} *${order.orderNumber}*\n`;
+    msg += `   ${order.supplier.businessName}\n`;
+    msg += `   Status: ${order.status} | ${formatTzsFromUsd(order.totalUsd)}\n\n`;
   });
 
   return { message: msg };
@@ -367,9 +410,9 @@ async function getPendingPayments(userId: string): Promise<BotResponse> {
     take: 5,
   });
 
-  const unpaid = orders.filter((o) => {
-    const paid = o.payments.reduce((sum, p) => sum + p.amountUsd, 0);
-    return paid < o.totalUsd;
+  const unpaid = orders.filter((order: (typeof orders)[number]) => {
+    const paid = order.payments.reduce((sum: number, payment: (typeof order.payments)[number]) => sum + payment.amountUsd, 0);
+    return paid < order.totalUsd;
   });
 
   if (unpaid.length === 0) {
@@ -377,21 +420,21 @@ async function getPendingPayments(userId: string): Promise<BotResponse> {
   }
 
   let msg = "💳 *Pending Payments:*\n\n";
-  unpaid.forEach((o) => {
-    const paid = o.payments.reduce((sum, p) => sum + p.amountUsd, 0);
-    const remaining = o.totalUsd - paid;
-    msg += `📋 *${o.orderNumber}* - ${o.supplier.businessName}\n`;
-    msg += `   Remaining: $${remaining.toFixed(2)}\n`;
+  unpaid.forEach((order: (typeof unpaid)[number]) => {
+    const paid = order.payments.reduce((sum: number, payment: (typeof order.payments)[number]) => sum + payment.amountUsd, 0);
+    const remaining = order.totalUsd - paid;
+    msg += `📋 *${order.orderNumber}* - ${order.supplier.businessName}\n`;
+    msg += `   Remaining: ${formatTzsFromUsd(remaining)}\n`;
     msg += `   M-Pesa: Lipa Na M-PESA 123456\n\n`;
   });
 
   return { message: msg };
 }
 
-async function updateSession(sessionId: string, state: string, context: any) {
+async function updateSession(sessionId: string, state: SessionState, context: SessionContext) {
   await db.whatsAppSession.update({
     where: { id: sessionId },
-    data: { state: state as any, context: JSON.stringify(context) },
+    data: { state, context: JSON.stringify(context) },
   });
 }
 
@@ -402,7 +445,7 @@ async function resetSession(sessionId: string) {
   });
 }
 
-async function getSessionContext(sessionId: string): Promise<any> {
+async function getSessionContext(sessionId: string): Promise<SessionContext | null> {
   const session = await db.whatsAppSession.findUnique({ where: { id: sessionId } });
-  return session?.context ? JSON.parse(session.context) : null;
+  return session?.context ? (JSON.parse(session.context) as SessionContext) : null;
 }

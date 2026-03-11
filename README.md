@@ -103,11 +103,10 @@ TWILIO_ACCOUNT_SID="your-twilio-sid"
 TWILIO_AUTH_TOKEN="your-twilio-token"
 TWILIO_WHATSAPP_NUMBER="whatsapp:+14155238886"
 
-# M-Pesa Payments (optional)
-MPESA_CONSUMER_KEY=""
-MPESA_CONSUMER_SECRET=""
-MPESA_PASSKEY=""
-MPESA_SHORTCODE=""
+# Snippe Payments (optional)
+SNIPPE_API_KEY=""
+SNIPPE_WEBHOOK_SECRET=""
+SNIPPE_BASE_URL="https://api.snippe.sh"
 ```
 
 ### 3. Set up the database
@@ -149,13 +148,13 @@ In the Vercel project settings, add these environment variables:
 | `DATABASE_URL` | Your PostgreSQL connection string | Yes |
 | `NEXTAUTH_SECRET` | A random secret (`openssl rand -base64 32`) | Yes |
 | `NEXTAUTH_URL` | Your Vercel domain (e.g. `https://malilink.vercel.app`) | Yes |
+| `USD_TO_TZS_RATE` | Fallback exchange rate (e.g. `2500`) | Optional |
 | `TWILIO_ACCOUNT_SID` | Twilio account SID | For WhatsApp |
 | `TWILIO_AUTH_TOKEN` | Twilio auth token | For WhatsApp |
 | `TWILIO_WHATSAPP_NUMBER` | Twilio WhatsApp number | For WhatsApp |
-| `MPESA_CONSUMER_KEY` | M-Pesa API key | For payments |
-| `MPESA_CONSUMER_SECRET` | M-Pesa API secret | For payments |
-| `MPESA_PASSKEY` | M-Pesa passkey | For payments |
-| `MPESA_SHORTCODE` | M-Pesa shortcode | For payments |
+| `SNIPPE_API_KEY` | Snippe secret API key | For hosted M-Pesa/mobile money checkout |
+| `SNIPPE_WEBHOOK_SECRET` | Snippe webhook signing secret | For payment webhooks |
+| `SNIPPE_BASE_URL` | Snippe API base URL (`https://api.snippe.sh`) | Optional |
 
 ### Step 4: Set up a database
 

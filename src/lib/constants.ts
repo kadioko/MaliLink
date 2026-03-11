@@ -1,6 +1,7 @@
 export const PLATFORM_FEE_RATE = 0.015; // 1.5% transaction fee
 export const DEFAULT_CREDIT_TERM_DAYS = 30;
 export const DEFAULT_INTEREST_RATE = 0.05; // 5% monthly
+export const DEFAULT_USD_TO_TZS_RATE = 2500;
 
 export const SUBSCRIPTION_PLANS = {
   starter: {

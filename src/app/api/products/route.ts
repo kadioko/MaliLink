@@ -14,6 +14,7 @@ const createProductSchema = z.object({
   priceTzs: z.number().positive(),
   moq: z.number().int().positive().default(1),
   imageUrls: z.array(z.string()).default([]),
+  inStock: z.boolean().default(true),
 });
 
 export async function GET(req: NextRequest) {
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
 
-  const where: any = { inStock: true };
+  const where: { inStock: boolean; category?: string; supplierId?: string; OR?: Array<Record<string, unknown>> } = { inStock: true };
   if (category) where.category = category;
   if (supplierId) where.supplierId = supplierId;
   if (search) {

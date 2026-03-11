@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { DEFAULT_CREDIT_TERM_DAYS, DEFAULT_INTEREST_RATE } from "@/lib/constants";
+import { getUsdToTzsRate } from "@/lib/utils";
 
 const requestCreditSchema = z.object({
   orderId: z.string(),
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Credit already requested for this order" }, { status: 409 });
     }
 
-    const exchangeRate = 2500;
+    const exchangeRate = getUsdToTzsRate();
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + data.termDays);
 

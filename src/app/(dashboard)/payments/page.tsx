@@ -1,64 +1,134 @@
-const PAYMENT_METHODS = [
-  { id: "MPESA", label: "M-Pesa", icon: "📱" },
-  { id: "TIGO_PESA", label: "Tigo Pesa", icon: "📱" },
-  { id: "AIRTEL_MONEY", label: "Airtel Money", icon: "📱" },
-  { id: "BANK_TRANSFER", label: "Bank Transfer", icon: "🏦" },
-  { id: "CASH", label: "Cash", icon: "💵" },
-];
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { formatTzsFromUsd } from "@/lib/utils";
+import { Badge, EmptyState, PageHeader, ResponsiveTable, SectionCard, StatCard } from "@/components/dashboard-ui";
+import { MpesaPaymentPanel } from "./mpesa-payment-panel";
 
-export default function PaymentsPage() {
+const PAYMENT_METHODS = ["MPESA", "TIGO_PESA", "AIRTEL_MONEY", "BANK_TRANSFER", "CASH", "CREDIT"];
+
+export default async function PaymentsPage() {
+  const session = await getServerSession(authOptions);
+
+  const where = session?.user.role === "ADMIN" ? {} : { userId: session?.user.id };
+
+  const payments = await db.payment.findMany({
+    where,
+    include: {
+      order: { select: { orderNumber: true, status: true } },
+      creditLine: { select: { id: true, status: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const payableOrders = session?.user.role === "IMPORTER"
+    ? await db.order.findMany({
+        where: {
+          importerId: session.user.id,
+          status: { in: ["SUBMITTED", "CONFIRMED", "PROCESSING", "SHIPPED", "IN_CUSTOMS", "DELIVERED", "COMPLETED"] },
+        },
+        include: {
+          supplier: { select: { businessName: true } },
+          payments: { where: { status: "COMPLETED" }, select: { amountTzs: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const unpaidOrders = payableOrders
+    .map((order: (typeof payableOrders)[number]) => {
+      const paidTzs = order.payments.reduce((sum: number, payment: { amountTzs: number }) => sum + payment.amountTzs, 0);
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        totalTzs: order.totalTzs,
+        paidTzs,
+        supplierName: order.supplier.businessName,
+        status: order.status,
+      };
+    })
+    .filter((order: { paidTzs: number; totalTzs: number }) => order.paidTzs < order.totalTzs);
+
+  let totalPaid = 0;
+  let pending = 0;
+  let platformFees = 0;
+
+  for (const payment of payments) {
+    platformFees += payment.platformFeeUsd;
+    if (payment.status === "COMPLETED") {
+      totalPaid += payment.amountUsd;
+    }
+    if (["PENDING", "PROCESSING"].includes(payment.status)) {
+      pending += payment.amountUsd;
+    }
+  }
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Payments</h1>
+    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Payments"
+        description="Monitor settled, pending, and gateway-tracked mobile-money payments with TZS-first reporting."
+        badge={<Badge tone="success">Mobile Money Ready</Badge>}
+      />
+
+      {session?.user.role === "IMPORTER" && unpaidOrders.length ? <MpesaPaymentPanel orders={unpaidOrders} /> : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Payment Summary */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl p-4 shadow-sm border">
-              <div className="text-sm text-gray-500">Total Paid</div>
-              <div className="text-xl font-bold text-gray-900">$0</div>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border">
-              <div className="text-sm text-gray-500">Pending</div>
-              <div className="text-xl font-bold text-amber-600">$0</div>
-            </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border">
-              <div className="text-sm text-gray-500">Platform Fees</div>
-              <div className="text-xl font-bold text-gray-900">$0</div>
-            </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatCard label="Total Paid" value={formatTzsFromUsd(totalPaid)} tone="success" delta="Successfully settled" />
+            <StatCard label="Pending" value={formatTzsFromUsd(pending)} tone="warning" delta="Awaiting completion" />
+            <StatCard label="Platform Fees" value={formatTzsFromUsd(platformFees)} tone="default" delta="1.5% transaction fee" />
           </div>
 
-          {/* Payment History */}
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-            <div className="px-4 py-3 border-b bg-gray-50">
-              <h2 className="font-semibold text-gray-700">Payment History</h2>
-            </div>
-            <div className="py-12 text-center text-gray-400">
-              <div className="text-3xl mb-2">💳</div>
-              <p>No payments recorded yet</p>
-            </div>
-          </div>
+          <SectionCard title="Payment History" description="Recent payment records including gateway references and final receipts.">
+            {payments.length ? (
+              <ResponsiveTable>
+              <table className="min-w-[760px] w-full">
+                <thead>
+                  <tr className="border-b bg-gray-50/50">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Method</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Amount</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Reference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment: (typeof payments)[number]) => (
+                    <tr key={payment.id} className="border-b last:border-b-0 hover:bg-gray-50/70">
+                      <td className="py-3 px-4 text-sm text-gray-600">{new Date(payment.createdAt).toLocaleDateString()}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{payment.method}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{formatTzsFromUsd(payment.amountUsd)}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600"><Badge tone={payment.status === "COMPLETED" ? "success" : payment.status === "FAILED" ? "danger" : "warning"}>{payment.status}</Badge></td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{payment.mpesaReceiptNo ?? payment.transactionRef ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </ResponsiveTable>
+            ) : (
+              <EmptyState icon="💳" title="No payments recorded yet" description="Payment history will appear here once orders begin settling." />
+            )}
+          </SectionCard>
         </div>
 
-        {/* Payment Methods */}
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <h2 className="font-semibold text-gray-700 mb-4">Payment Methods</h2>
+        <SectionCard title="Payment Methods" description="Available collection channels configured for the current marketplace setup.">
           <div className="space-y-3">
             {PAYMENT_METHODS.map((method) => (
               <div
-                key={method.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-emerald-300 cursor-pointer transition"
+                key={method}
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200"
               >
-                <span className="text-xl">{method.icon}</span>
-                <span className="font-medium text-gray-700">{method.label}</span>
+                <span className="font-medium text-gray-700">{method}</span>
+                <Badge tone="success">Available</Badge>
               </div>
             ))}
           </div>
           <p className="text-xs text-gray-400 mt-4">
-            1.5% transaction fee applies. Mobile money payments are processed in real-time.
+            1.5% transaction fee applies. Mobile money and gateway integrations still require production credentials.
           </p>
-        </div>
+        </SectionCard>
       </div>
     </div>
   );

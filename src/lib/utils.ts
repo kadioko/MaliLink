@@ -1,4 +1,4 @@
-import { PLATFORM_FEE_RATE } from "./constants";
+import { DEFAULT_USD_TO_TZS_RATE, PLATFORM_FEE_RATE } from "./constants";
 
 export function formatCurrency(amount: number, currency: "USD" | "TZS" = "USD"): string {
   if (currency === "TZS") {
@@ -7,8 +7,28 @@ export function formatCurrency(amount: number, currency: "USD" | "TZS" = "USD"):
   return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+export function convertUsdToTzs(amountUsd: number, exchangeRate = getUsdToTzsRate()): number {
+  return Math.round(amountUsd * exchangeRate);
+}
+
+export function formatTzs(amount: number): string {
+  return formatCurrency(amount, "TZS");
+}
+
+export function formatTzsFromUsd(amountUsd: number, exchangeRate = getUsdToTzsRate()): string {
+  return formatTzs(convertUsdToTzs(amountUsd, exchangeRate));
+}
+
 export function calculatePlatformFee(amountUsd: number): number {
   return Math.round(amountUsd * PLATFORM_FEE_RATE * 100) / 100;
+}
+
+export function getUsdToTzsRate(): number {
+  const envRate = Number(process.env.USD_TO_TZS_RATE);
+  if (Number.isFinite(envRate) && envRate > 0) {
+    return envRate;
+  }
+  return DEFAULT_USD_TO_TZS_RATE;
 }
 
 export function generateOrderNumber(): string {

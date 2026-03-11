@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import { generateOrderNumber, calculatePlatformFee } from "@/lib/utils";
+import { generateOrderNumber, getUsdToTzsRate } from "@/lib/utils";
 
 const createOrderSchema = z.object({
   supplierId: z.string(),
@@ -68,7 +68,9 @@ export async function POST(req: NextRequest) {
       where: { id: { in: data.items.map((i) => i.productId) } },
     });
 
-    const productMap = new Map(products.map((p) => [p.id, p]));
+    const productMap = new Map<string, (typeof products)[number]>(
+      products.map((product: (typeof products)[number]) => [product.id, product])
+    );
 
     let subtotalUsd = 0;
     const orderItems = data.items.map((item) => {
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
     });
 
     const totalUsd = subtotalUsd;
-    const exchangeRate = 2500; // TODO: fetch live USD/TZS rate
+    const exchangeRate = getUsdToTzsRate();
     const totalTzs = totalUsd * exchangeRate;
 
     const order = await db.order.create({

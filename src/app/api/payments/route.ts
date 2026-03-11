@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
-import { calculatePlatformFee } from "@/lib/utils";
+import { calculatePlatformFee, getUsdToTzsRate } from "@/lib/utils";
 
 const createPaymentSchema = z.object({
   orderId: z.string().optional(),
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = createPaymentSchema.parse(body);
 
-    const exchangeRate = 2500; // TODO: live rate
+    const exchangeRate = getUsdToTzsRate();
     const platformFeeUsd = calculatePlatformFee(data.amountUsd);
 
     const payment = await db.payment.create({

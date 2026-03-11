@@ -1,75 +1,99 @@
-export default function CreditPage() {
-  return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Credit Management</h1>
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { formatTzsFromUsd } from "@/lib/utils";
+import { Badge, EmptyState, PageHeader, ResponsiveTable, SectionCard, StatCard } from "@/components/dashboard-ui";
 
-      {/* Credit Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-4 shadow-sm border">
-          <div className="text-sm text-gray-500">Active Credit Lines</div>
-          <div className="text-2xl font-bold text-gray-900">0</div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border">
-          <div className="text-sm text-gray-500">Total Outstanding</div>
-          <div className="text-2xl font-bold text-amber-600">$0</div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border">
-          <div className="text-sm text-gray-500">Total Repaid</div>
-          <div className="text-2xl font-bold text-emerald-600">$0</div>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm border">
-          <div className="text-sm text-gray-500">Overdue</div>
-          <div className="text-2xl font-bold text-red-600">$0</div>
-        </div>
+export default async function CreditPage() {
+  const session = await getServerSession(authOptions);
+
+  const where =
+    session?.user.role === "SUPPLIER"
+      ? { lenderId: session.user.id }
+      : session?.user.role === "IMPORTER"
+        ? { borrowerId: session.user.id }
+        : {};
+
+  const creditLines = await db.creditLine.findMany({
+    where,
+    include: {
+      order: { select: { orderNumber: true } },
+      lender: { select: { businessName: true } },
+      borrower: { select: { businessName: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  let totalOutstanding = 0;
+  let totalRepaid = 0;
+  let overdueAmount = 0;
+  let activeCount = 0;
+
+  for (const creditLine of creditLines) {
+    totalRepaid += creditLine.paidAmount;
+    const outstanding = creditLine.amountUsd - creditLine.paidAmount;
+    if (["ACTIVE", "APPROVED", "REQUESTED", "OVERDUE"].includes(creditLine.status)) {
+      totalOutstanding += outstanding;
+      activeCount += 1;
+    }
+    if (creditLine.status === "OVERDUE") {
+      overdueAmount += outstanding;
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
+      <PageHeader
+        title="Credit Management"
+        description="Track outstanding balances, repayments, and overdue exposure in Tanzanian shillings."
+        badge={<Badge tone="warning">Credit Monitoring</Badge>}
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Active Credit Lines" value={String(activeCount)} delta="Currently open relationships" />
+        <StatCard label="Total Outstanding" value={formatTzsFromUsd(totalOutstanding)} tone="warning" delta="Still to be recovered" />
+        <StatCard label="Total Repaid" value={formatTzsFromUsd(totalRepaid)} tone="success" delta="Settled to date" />
+        <StatCard label="Overdue" value={formatTzsFromUsd(overdueAmount)} tone="danger" delta="Requires immediate attention" />
       </div>
 
-      {/* Credit Lines Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="px-4 py-3 border-b bg-gray-50 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-700">Credit Lines</h2>
-        </div>
-        <table className="w-full">
+      <SectionCard title="Credit Lines" description="Outstanding, repaid, due-date, and status visibility for each order-backed credit record." action={<Badge tone="info">Displayed in TZS</Badge>}>
+        <ResponsiveTable>
+        <table className="min-w-[820px] w-full">
           <thead>
             <tr className="border-b bg-gray-50/50">
               <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Order</th>
-              <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Supplier</th>
+              <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Counterparty</th>
               <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Amount</th>
               <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Paid</th>
               <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Due Date</th>
               <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-              <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colSpan={7} className="py-12 text-center text-gray-400">
-                <div className="text-3xl mb-2">🏦</div>
-                <p className="font-medium text-gray-600">No credit lines</p>
-                <p className="text-sm mt-1">Credit is available when placing orders with qualifying suppliers.</p>
-              </td>
-            </tr>
+            {creditLines.length ? (
+              creditLines.map((creditLine: (typeof creditLines)[number]) => (
+                <tr key={creditLine.id} className="border-b last:border-b-0 hover:bg-gray-50/70">
+                  <td className="py-3 px-4 text-sm font-medium text-gray-900">{creditLine.order.orderNumber}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">
+                    {session?.user.role === "SUPPLIER" ? creditLine.borrower.businessName : creditLine.lender.businessName}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{formatTzsFromUsd(creditLine.amountUsd)}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{formatTzsFromUsd(creditLine.paidAmount)}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">
+                    {creditLine.dueDate ? new Date(creditLine.dueDate).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-600"><Badge tone={creditLine.status === "OVERDUE" ? "danger" : ["ACTIVE", "APPROVED"].includes(creditLine.status) ? "success" : "warning"}>{creditLine.status}</Badge></td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6}><EmptyState icon="🏦" title="No credit lines" description="Credit is available when placing orders with qualifying suppliers." /></td>
+              </tr>
+            )}
           </tbody>
         </table>
-      </div>
-
-      {/* How Credit Works */}
-      <div className="mt-8 bg-emerald-50 rounded-xl p-6 border border-emerald-200">
-        <h3 className="font-semibold text-emerald-800 mb-3">How Credit Works on MaliLink</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-emerald-700">
-          <div>
-            <strong>1. Request Credit</strong>
-            <p>When placing an order, request credit terms from the supplier (typically 30-90 days).</p>
-          </div>
-          <div>
-            <strong>2. Supplier Approves</strong>
-            <p>The supplier reviews your order history and business profile before approving credit.</p>
-          </div>
-          <div>
-            <strong>3. Repay on Time</strong>
-            <p>Build your credit score by repaying on time. Better scores unlock better terms.</p>
-          </div>
-        </div>
-      </div>
+        </ResponsiveTable>
+      </SectionCard>
     </div>
   );
 }
