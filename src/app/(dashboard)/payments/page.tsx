@@ -71,7 +71,21 @@ export default async function PaymentsPage() {
         badge={<Badge tone="success">Mobile Money Ready</Badge>}
       />
 
-      {session?.user.role === "IMPORTER" && unpaidOrders.length ? <MpesaPaymentPanel orders={unpaidOrders} /> : null}
+      {session?.user.role === "IMPORTER" ? (
+        <MpesaPaymentPanel orders={unpaidOrders} />
+      ) : (
+        <SectionCard
+          title="M-Pesa Checkout"
+          description="Checkout initiation is currently available to importer accounts with payable orders."
+          action={<Badge tone="warning">Importer only</Badge>}
+        >
+          <EmptyState
+            icon="💳"
+            title="Payment initiation unavailable for this account"
+            description="Switch to an importer account to start a Snippe-hosted M-Pesa payment for an order balance."
+          />
+        </SectionCard>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">

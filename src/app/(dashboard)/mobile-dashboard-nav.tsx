@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { SignOutButton } from "./sign-out-button";
 
 type MobileDashboardNavProps = {
   items: Array<{ href: string; label: string; icon: string }>;
@@ -61,6 +62,9 @@ export function MobileDashboardNav({ items, businessName, role }: MobileDashboar
                 );
               })}
             </nav>
+            <div className="border-t border-gray-200 p-4">
+              <SignOutButton />
+            </div>
           </div>
         </div>
       ) : null}

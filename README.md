@@ -16,6 +16,100 @@ MaliLink connects importers with suppliers, manages orders from web and WhatsApp
 - **In-app messaging** — Direct communication between importers and suppliers
 - **Dashboard analytics** — Revenue, order volume, and business insights
 
+## Role Capabilities
+
+### Importer
+
+- **Browse suppliers and products**
+  - View the supplier directory and active supplier listings
+  - Browse product catalog entries with TZS-first pricing, MOQ, stock status, and supplier details
+
+- **Create and manage orders**
+  - Start new web orders from the dashboard
+  - Select suppliers and in-stock products
+  - Enter quantities, validate MOQ, and submit orders
+  - View own order history, totals, statuses, and order source
+
+- **Initiate payments**
+  - Access the M-Pesa checkout section on the payments page
+  - Start Snippe-hosted checkout for unpaid order balances
+  - Track payment status with polling after checkout begins
+  - View gateway references and M-Pesa receipt/reference details after settlement
+
+- **Monitor payment and credit records**
+  - View payment history, statuses, and references tied to the account
+  - View credit lines where the importer is the borrower
+  - Review outstanding, repaid, overdue, and active credit balances
+
+- **Use WhatsApp ordering flows**
+  - Interact with the WhatsApp bot for product discovery and ordering
+  - Receive payment and order updates through integrated messaging flows
+
+- **Current limitations**
+  - Can only initiate checkout when there is an unpaid order balance
+  - Cannot use admin-only platform oversight capabilities
+
+### Supplier
+
+- **Manage product catalog**
+  - Add products from the supplier dashboard
+  - Edit product details including name, Swahili name, category, unit, MOQ, description, image URLs, and stock state
+  - Set and maintain TZS pricing for listings
+  - Delete products from the managed catalog
+
+- **Monitor incoming business**
+  - View orders where the supplier is the seller
+  - Review order totals, item counts, counterparties, statuses, and order source
+  - Track recent order activity from the dashboard
+
+- **Track payments and credit**
+  - View payment history associated with the supplier account
+  - Review payment statuses and available references
+  - View credit lines where the supplier is the lender
+  - Track active, overdue, repaid, and outstanding credit exposure
+
+- **Appear in the supplier marketplace**
+  - Be represented through supplier listings in the directory
+  - Surface business details, listing tier, ratings, review counts, and product counts to buyers
+
+- **Benefit from WhatsApp ordering**
+  - Receive business generated through importer WhatsApp ordering flows
+  - Participate in the downstream order and payment lifecycle once orders are placed
+
+- **Current limitations**
+  - Cannot initiate Snippe M-Pesa checkout for order balances from the payments page
+  - Checkout initiation is reserved for importer accounts paying outstanding balances
+  - Does not have platform-wide administrative controls
+
+### Admin
+
+- **Platform-wide visibility**
+  - View dashboard summaries across the platform
+  - View orders, payments, and other system data without being restricted to a single buyer or supplier
+
+- **Operational oversight**
+  - Monitor payment activity and settlement states
+  - Review supplier and importer activity through shared dashboard and listing surfaces
+
+- **Current limitations**
+  - The current UI is more business-operations oriented than admin-control-panel oriented
+  - Dedicated admin-only management workflows are still limited compared to importer and supplier day-to-day flows
+
+### Shared capabilities across authenticated roles
+
+- **Access dashboard views**
+  - Use dashboard navigation, role-aware summaries, and recent activity views
+
+- **Review financial information in TZS-first format**
+  - Most business-facing surfaces prioritize Tanzanian shilling display
+
+- **View role-relevant orders, payments, and credit records**
+  - Data visibility is scoped by role and ownership rules in the application
+
+- **Authenticate and sign out**
+  - Access the protected dashboard after login
+  - Sign out from the desktop sidebar or mobile dashboard menu
+
 ## Tech Stack
 
 | Layer | Technology |

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatTzs } from "@/lib/utils";
+import { EmptyState } from "@/components/dashboard-ui";
 
 type PayableOrder = {
   id: string;
@@ -44,6 +45,7 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
     [orders, selectedOrderId]
   );
 
+  const hasOrders = orders.length > 0;
   const outstandingAmount = selectedOrder ? Math.max(selectedOrder.totalTzs - selectedOrder.paidTzs, 0) : 0;
 
   useEffect(() => {
@@ -77,6 +79,28 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
 
     return () => window.clearInterval(interval);
   }, [paymentId, paymentStatus]);
+
+  if (!hasOrders) {
+    return (
+      <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">M-Pesa Checkout</h2>
+            <p className="mt-1 text-sm text-gray-500">Start a Snippe-hosted M-Pesa payment for any unpaid order balance in TZS.</p>
+          </div>
+          <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">Snippe Connected</div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-dashed border-gray-300 bg-gray-50">
+          <EmptyState
+            icon="💳"
+            title="No unpaid orders available"
+            description="Create or confirm an order with an outstanding balance, then return here to start M-Pesa checkout."
+          />
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
