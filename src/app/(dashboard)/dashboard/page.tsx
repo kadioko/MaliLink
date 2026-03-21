@@ -1,35 +1,72 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { UserRole } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatTzsFromUsd } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, ResponsiveTable, SectionCard, StatCard } from "@/components/dashboard-ui";
 
-const quickActions = [
-  { label: "New Order", href: "/orders?new=1", icon: "Create" },
-  { label: "Browse Suppliers", href: "/suppliers", icon: "Find" },
-  { label: "Make Payment", href: "/payments", icon: "Pay" },
-  { label: "View Credit", href: "/credit", icon: "Credit" },
-];
+const dashboardQuickActions: Record<UserRole, Array<{ label: string; href: string; icon: string }>> = {
+  IMPORTER: [
+    { label: "New Order", href: "/orders?new=1", icon: "Create" },
+    { label: "Browse Suppliers", href: "/suppliers", icon: "Find" },
+    { label: "Make Payment", href: "/payments", icon: "Pay" },
+    { label: "View Credit", href: "/credit", icon: "Credit" },
+  ],
+  SUPPLIER: [
+    { label: "Add Product", href: "/products", icon: "Catalog" },
+    { label: "Review Orders", href: "/orders", icon: "Fulfill" },
+    { label: "Track Payments", href: "/payments", icon: "Reconcile" },
+    { label: "Monitor Credit", href: "/credit", icon: "Finance" },
+  ],
+  ADMIN: [
+    { label: "Review Orders", href: "/orders", icon: "Ops" },
+    { label: "Inspect Products", href: "/products", icon: "Catalog" },
+    { label: "Review Suppliers", href: "/suppliers", icon: "Network" },
+    { label: "Audit Payments", href: "/payments", icon: "Audit" },
+  ],
+};
+
+const dashboardHeaderActions: Record<UserRole, { label: string; href: string }> = {
+  IMPORTER: { label: "+ New Order", href: "/orders?new=1" },
+  SUPPLIER: { label: "+ Add Product", href: "/products" },
+  ADMIN: { label: "View Platform Orders", href: "/orders" },
+};
+
+const dashboardDescriptions: Record<UserRole, string> = {
+  IMPORTER: "Your financial overview is shown in Tanzanian shillings with role-aware activity highlights for buying, payment, and credit.",
+  SUPPLIER: "Your supplier workspace highlights catalog performance, incoming orders, receivables, and credit exposure in Tanzanian shillings.",
+  ADMIN: "Your platform-wide operations workspace highlights cross-market order, payment, and credit activity in Tanzanian shillings.",
+};
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
+  if (!session) {
+    redirect("/login?callbackUrl=/dashboard");
+  }
+
+  const role = session.user.role;
+
   const orderWhere =
-    session?.user.role === "SUPPLIER"
+    role === "SUPPLIER"
       ? { supplierId: session.user.id }
-      : session?.user.role === "IMPORTER"
+      : role === "IMPORTER"
         ? { importerId: session.user.id }
         : {};
 
-  const paymentWhere = session?.user.role === "ADMIN" ? {} : { userId: session?.user.id };
+  const paymentWhere = role === "ADMIN" ? {} : { userId: session.user.id };
 
   const creditWhere =
-    session?.user.role === "SUPPLIER"
+    role === "SUPPLIER"
       ? { lenderId: session.user.id }
-      : session?.user.role === "IMPORTER"
+      : role === "IMPORTER"
         ? { borrowerId: session.user.id }
         : {};
+
+  const quickActions = dashboardQuickActions[role];
+  const headerAction = dashboardHeaderActions[role];
 
   const [orders, payments, creditLines] = await Promise.all([
     db.order.findMany({
@@ -88,24 +125,37 @@ export default async function DashboardPage() {
     { label: "Completed", value: String(completedOrders), delta: "Orders finished successfully", tone: "info" as const },
   ];
 
-  const activityFeed = [
-    `${orders.length} recent orders are visible in your account`,
-    `${payments.length} payment records are available for review`,
-    `${creditLines.length} credit records are currently being tracked`,
-  ];
+  const activityFeed =
+    role === "IMPORTER"
+      ? [
+          `${orders.length} recent orders are visible in your buyer workspace`,
+          `${payments.length} payment records are available for settlement review`,
+          `${creditLines.length} credit records are currently tied to your borrowing activity`,
+        ]
+      : role === "SUPPLIER"
+        ? [
+            `${orders.length} recent incoming orders are visible in your supplier workspace`,
+            `${payments.length} payment records are available for receivables tracking`,
+            `${creditLines.length} credit records are currently tied to your lending activity`,
+          ]
+        : [
+            `${orders.length} recent platform orders are visible in the admin workspace`,
+            `${payments.length} payment records are available for operational review`,
+            `${creditLines.length} credit records are currently being monitored across the marketplace`,
+          ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
       <PageHeader
         title="Dashboard"
-        description={`Welcome back, ${session?.user.name}. Your financial overview is shown in Tanzanian shillings with role-aware activity highlights.`}
-        badge={<Badge tone="success">{session?.user.role}</Badge>}
+        description={`Welcome back, ${session?.user.name}. ${dashboardDescriptions[role]}`}
+        badge={<Badge tone="success">{role}</Badge>}
         action={
           <Link
-            href="/orders?new=1"
+            href={headerAction.href}
             className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 font-medium text-white shadow-sm transition hover:bg-emerald-700"
           >
-            + New Order
+            {headerAction.label}
           </Link>
         }
       />
@@ -117,7 +167,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr,0.75fr]">
-        <SectionCard title="Quick Actions" description="Common workflows for ordering, supplier discovery, payments, and credit.">
+        <SectionCard title="Quick Actions" description="Recommended next steps based on your current role and responsibilities.">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {quickActions.map((action) => (
               <Link
@@ -166,9 +216,11 @@ export default async function DashboardPage() {
                 <tr key={currentOrder.id} className="border-b last:border-b-0 hover:bg-gray-50/70">
                   <td className="py-3 px-4 text-sm font-medium text-gray-900">{currentOrder.orderNumber}</td>
                   <td className="py-3 px-4 text-sm text-gray-600">
-                    {session?.user.role === "SUPPLIER"
+                    {role === "SUPPLIER"
                       ? currentOrder.importer.businessName
-                      : currentOrder.supplier.businessName}
+                      : role === "IMPORTER"
+                        ? currentOrder.supplier.businessName
+                        : `${currentOrder.importer.businessName} → ${currentOrder.supplier.businessName}`}
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-600"><Badge tone={currentOrder.status === "COMPLETED" ? "success" : currentOrder.status === "CANCELLED" ? "danger" : "warning"}>{currentOrder.status}</Badge></td>
                   <td className="py-3 px-4 text-sm text-gray-600">{formatTzsFromUsd(currentOrder.totalUsd)}</td>
@@ -180,7 +232,7 @@ export default async function DashboardPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6}><EmptyState icon="📦" title="No orders yet" description="Place your first order to get started." /></td>
+                <td colSpan={6}><EmptyState icon="📦" title="No orders yet" description={role === "IMPORTER" ? "Place your first order or browse suppliers to get started." : role === "SUPPLIER" ? "Orders from importers will appear here once your catalog starts receiving demand." : "Platform orders will appear here once marketplace activity begins."} /></td>
               </tr>
             )}
           </tbody>

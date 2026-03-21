@@ -70,16 +70,16 @@ export default async function OrdersPage() {
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
       <PageHeader
         title="Orders"
-        description="Track order progress, review TZS totals, and manage new web-based order submissions."
+        description={session?.user.role === "IMPORTER" ? "Track order progress, review TZS totals, and manage new web-based order submissions." : session?.user.role === "SUPPLIER" ? "Track incoming buyer orders, review fulfillment progress, and monitor TZS totals." : "Review marketplace-wide order activity, counterparties, and fulfillment progress in one place."}
         badge={<Badge tone="info">TZS-first</Badge>}
-        action={
+        action={session?.user.role === "IMPORTER" ? (
           <Link
             href="/orders?new=1"
             className="rounded-xl bg-emerald-600 px-4 py-2 text-white font-medium transition hover:bg-emerald-700"
           >
             + New Order
           </Link>
-        }
+        ) : null}
       />
 
       {session?.user.role === "IMPORTER" ? <NewOrderPanel suppliers={suppliers} /> : null}
@@ -117,7 +117,7 @@ export default async function OrdersPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={7}><EmptyState icon="📦" title="No orders yet" description="Place your first order or browse suppliers to get started." /></td>
+                <td colSpan={7}><EmptyState icon="📦" title="No orders yet" description={session?.user.role === "IMPORTER" ? "Place your first order or browse suppliers to get started." : session?.user.role === "SUPPLIER" ? "Incoming customer orders will appear here once importers begin ordering from your catalog." : "Marketplace orders will appear here once trading activity begins."} /></td>
               </tr>
             )}
           </tbody>

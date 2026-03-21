@@ -1,19 +1,36 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { UserRole } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { Badge } from "@/components/dashboard-ui";
 import { MobileDashboardNav } from "./mobile-dashboard-nav";
 import { SignOutButton } from "./sign-out-button";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/orders", label: "Orders", icon: "📦" },
-  { href: "/products", label: "Products", icon: "🏪" },
-  { href: "/suppliers", label: "Suppliers", icon: "🏭" },
-  { href: "/payments", label: "Payments", icon: "💳" },
-  { href: "/credit", label: "Credit", icon: "🏦" },
-];
+const dashboardNavItems: Record<UserRole, Array<{ href: string; label: string; icon: string }>> = {
+  IMPORTER: [
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/orders", label: "Orders", icon: "📦" },
+    { href: "/suppliers", label: "Suppliers", icon: "🏭" },
+    { href: "/payments", label: "Payments", icon: "💳" },
+    { href: "/credit", label: "Credit", icon: "🏦" },
+  ],
+  SUPPLIER: [
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/products", label: "Products", icon: "🏪" },
+    { href: "/orders", label: "Orders", icon: "📦" },
+    { href: "/payments", label: "Payments", icon: "💳" },
+    { href: "/credit", label: "Credit", icon: "🏦" },
+  ],
+  ADMIN: [
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+    { href: "/orders", label: "Orders", icon: "📦" },
+    { href: "/products", label: "Products", icon: "🏪" },
+    { href: "/suppliers", label: "Suppliers", icon: "🏭" },
+    { href: "/payments", label: "Payments", icon: "💳" },
+    { href: "/credit", label: "Credit", icon: "🏦" },
+  ],
+};
 
 export default async function DashboardLayout({
   children,
@@ -25,6 +42,8 @@ export default async function DashboardLayout({
   if (!session) {
     redirect("/login?callbackUrl=/dashboard");
   }
+
+  const navItems = dashboardNavItems[session.user.role];
 
   return (
     <div className="min-h-screen bg-gray-50 lg:flex">

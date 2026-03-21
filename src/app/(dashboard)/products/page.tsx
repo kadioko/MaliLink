@@ -31,8 +31,8 @@ export default async function ProductsPage() {
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
       <PageHeader
         title="Product Catalog"
-        description={`${products.length} products available with TZS-first pricing and supplier inventory visibility.`}
-        badge={<Badge tone="success">Live Supplier Listings</Badge>}
+        description={session?.user.role === "SUPPLIER" ? `${products.length} products available with TZS-first pricing. Manage your catalog while monitoring what buyers can see.` : `${products.length} products available with TZS-first pricing and supplier inventory visibility.`}
+        badge={<Badge tone={session?.user.role === "SUPPLIER" ? "info" : "success"}>{session?.user.role === "SUPPLIER" ? "Supplier Catalog" : "Live Supplier Listings"}</Badge>}
       />
 
       {session?.user.role === "SUPPLIER" ? (
@@ -67,7 +67,7 @@ export default async function ProductsPage() {
             </div>
           ))
         ) : (
-          <div className="col-span-full"><EmptyState icon="🏪" title="No products listed yet" description="Suppliers can add products from their dashboard." /></div>
+          <div className="col-span-full"><EmptyState icon="🏪" title="No products listed yet" description={session?.user.role === "SUPPLIER" ? "Add your first product from the supplier management panel above to start receiving orders." : "Suppliers have not published products yet. Check back later or onboard supplier accounts to populate the catalog."} /></div>
         )}
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { CreditStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 
@@ -9,9 +10,17 @@ export async function GET() {
 
   const userId = session.user.id;
   const role = session.user.role;
+  const activeCreditStatuses: CreditStatus[] = [CreditStatus.ACTIVE, CreditStatus.OVERDUE];
 
   const orderWhere =
-    role === "IMPORTER" ? { importerId: userId } : { supplierId: userId };
+    role === "IMPORTER" ? { importerId: userId } : role === "SUPPLIER" ? { supplierId: userId } : {};
+  const paymentWhere = role === "ADMIN" ? {} : { userId };
+  const creditWhere =
+    role === "IMPORTER"
+      ? { borrowerId: userId, status: { in: activeCreditStatuses } }
+      : role === "SUPPLIER"
+        ? { lenderId: userId, status: { in: activeCreditStatuses } }
+        : { status: { in: activeCreditStatuses } };
 
   const [
     totalOrders,
@@ -27,18 +36,15 @@ export async function GET() {
     }),
     db.order.count({ where: { ...orderWhere, status: "COMPLETED" } }),
     db.payment.aggregate({
-      where: { userId, status: "COMPLETED" },
+      where: { ...paymentWhere, status: "COMPLETED" },
       _sum: { amountUsd: true },
     }),
     db.payment.aggregate({
-      where: { userId, status: "PENDING" },
+      where: { ...paymentWhere, status: { in: ["PENDING", "PROCESSING"] } },
       _sum: { amountUsd: true },
     }),
     db.creditLine.aggregate({
-      where: {
-        [role === "IMPORTER" ? "borrowerId" : "lenderId"]: userId,
-        status: { in: ["ACTIVE", "OVERDUE"] },
-      },
+      where: creditWhere,
       _sum: { amountUsd: true },
       _count: true,
     }),
@@ -50,7 +56,7 @@ export async function GET() {
     completedOrders,
     totalRevenue: totalRevenue._sum.amountUsd || 0,
     pendingPayments: pendingPayments._sum.amountUsd || 0,
-    activeCreditAmount: activeCredit._sum.amountUsd || 0,
+    activeCreditAmount: activeCredit._sum?.amountUsd || 0,
     activeCreditCount: activeCredit._count || 0,
   });
 }

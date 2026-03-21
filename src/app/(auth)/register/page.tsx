@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
+import { FormEvent, useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 
 type RegisterFormState = {
   name: string;
@@ -29,9 +29,21 @@ const initialFormState: RegisterFormState = {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { status } = useSession();
   const [form, setForm] = useState<RegisterFormState>(initialFormState);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+      router.refresh();
+    }
+  }, [router, status]);
+
+  if (status === "loading" || status === "authenticated") {
+    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-amber-50 px-4 text-sm font-medium text-gray-600">Redirecting to your dashboard...</div>;
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

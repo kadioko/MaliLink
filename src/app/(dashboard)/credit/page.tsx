@@ -45,7 +45,7 @@ export default async function CreditPage() {
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
       <PageHeader
         title="Credit Management"
-        description="Track outstanding balances, repayments, and overdue exposure in Tanzanian shillings."
+        description={session?.user.role === "IMPORTER" ? "Track outstanding balances, repayments, and overdue exposure for supplier credit in Tanzanian shillings." : session?.user.role === "SUPPLIER" ? "Track lending exposure, repayments, and overdue buyer balances in Tanzanian shillings." : "Monitor marketplace-wide credit exposure, repayments, and overdue balances in Tanzanian shillings."}
         badge={<Badge tone="warning">Credit Monitoring</Badge>}
       />
 
@@ -87,7 +87,7 @@ export default async function CreditPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6}><EmptyState icon="🏦" title="No credit lines" description="Credit is available when placing orders with qualifying suppliers." /></td>
+                <td colSpan={6}><EmptyState icon="🏦" title="No credit lines" description={session?.user.role === "IMPORTER" ? "Credit becomes available when you place orders with qualifying suppliers offering financing terms." : session?.user.role === "SUPPLIER" ? "Credit lines will appear here once you extend financing to importer orders." : "Platform credit records will appear here once financing activity begins."} /></td>
               </tr>
             )}
           </tbody>
