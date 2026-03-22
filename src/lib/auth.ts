@@ -34,6 +34,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           businessName: user.businessName,
+          emailVerified: Boolean(user.emailVerifiedAt),
+          phoneVerified: Boolean(user.phoneVerifiedAt),
         };
       },
     }),
@@ -44,7 +46,20 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role;
         token.businessName = (user as any).businessName;
+        token.emailVerified = Boolean((user as any).emailVerified);
+        token.phoneVerified = Boolean((user as any).phoneVerified);
       }
+
+      if (token.id) {
+        const currentUser = await db.user.findUnique({
+          where: { id: token.id },
+          select: { emailVerifiedAt: true, phoneVerifiedAt: true },
+        });
+
+        token.emailVerified = Boolean(currentUser?.emailVerifiedAt);
+        token.phoneVerified = Boolean(currentUser?.phoneVerifiedAt);
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -52,6 +67,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
         (session.user as any).businessName = token.businessName;
+        (session.user as any).emailVerified = Boolean(token.emailVerified);
+        (session.user as any).phoneVerified = Boolean(token.phoneVerified);
       }
       return session;
     },

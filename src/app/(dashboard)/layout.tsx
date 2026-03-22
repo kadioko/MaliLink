@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { UserRole } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { Badge } from "@/components/dashboard-ui";
+import { SessionMonitor } from "@/components/session-monitor";
 import { MobileDashboardNav } from "./mobile-dashboard-nav";
 import { SignOutButton } from "./sign-out-button";
 
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 lg:flex">
+      <SessionMonitor />
       <MobileDashboardNav items={navItems} businessName={session.user.businessName} role={session.user.role} />
       <aside className="hidden w-72 border-r border-gray-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <div className="border-b p-5">
@@ -85,7 +87,37 @@ export default async function DashboardLayout({
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 overflow-auto">{children}</main>
+      <main className="min-w-0 flex-1 overflow-auto">
+        {!session.user.emailVerified || !session.user.phoneVerified ? (
+          <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-6">
+            <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-amber-900">Verify your account details</p>
+                <p className="text-sm text-amber-800">
+                  {!session.user.emailVerified && !session.user.phoneVerified
+                    ? "Email and phone verification are still pending."
+                    : !session.user.emailVerified
+                      ? "Email verification is still pending."
+                      : "Phone verification is still pending."}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {!session.user.emailVerified ? (
+                  <Link href="/verify" className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700">
+                    Verify email
+                  </Link>
+                ) : null}
+                {!session.user.phoneVerified ? (
+                  <Link href="/verify" className="rounded-lg border border-emerald-300 bg-white px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50">
+                    Verify phone
+                  </Link>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {children}
+      </main>
     </div>
   );
 }

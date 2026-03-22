@@ -1,17 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loginReason = searchParams.get("reason");
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -60,6 +62,12 @@ export default function LoginPage() {
           <p className="text-gray-500 mt-2">Kariakoo Trade Hub</p>
         </div>
 
+        {loginReason === "session-expired" ? (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Your session expired. Sign in again to continue where you left off.
+          </div>
+        ) : null}
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -89,6 +97,11 @@ export default function LoginPage() {
               placeholder="Enter your password"
               required
             />
+            <div className="mt-2 text-right">
+              <Link href="/forgot-password" className="text-sm font-medium text-emerald-600 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {error ? (
@@ -120,5 +133,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-amber-50 px-4 text-sm font-medium text-gray-600">Loading sign-in...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

@@ -5,7 +5,7 @@ const features = [
     icon: "📱",
     title: "WhatsApp Ordering",
     description:
-      "Buyers order through WhatsApp - no app download needed. Search products, place orders, track shipments, all from a chat.",
+      "Buyers can browse products and place orders through WhatsApp with no app download required, while orders still flow back into the web dashboard.",
   },
   {
     icon: "📦",
@@ -23,7 +23,7 @@ const features = [
     icon: "💳",
     title: "Mobile Payments",
     description:
-      "M-Pesa, Tigo Pesa, Airtel Money integration. Pay suppliers, settle credit, and track all transactions in one place.",
+      "Track mobile-money and payment activity in one place, with importer checkout flows and platform-wide operational visibility.",
   },
   {
     icon: "🏪",
@@ -44,7 +44,7 @@ const pricingTiers = [
     name: "Starter",
     price: "$9",
     period: "/mo",
-    description: "For small importers getting started",
+    description: "For small import businesses getting started",
     features: [
       "Up to 10 orders/month",
       "WhatsApp ordering",
@@ -57,7 +57,7 @@ const pricingTiers = [
     name: "Business",
     price: "$27",
     period: "/mo",
-    description: "For growing import businesses",
+    description: "For growing trading teams managing more volume",
     popular: true,
     features: [
       "Unlimited orders",
@@ -73,7 +73,7 @@ const pricingTiers = [
     name: "Enterprise",
     price: "$79",
     period: "/mo",
-    description: "For large-scale operations",
+    description: "For larger multi-user trading operations",
     features: [
       "Everything in Business",
       "Multi-user access",
@@ -88,7 +88,7 @@ const pricingTiers = [
 
 const stats = [
   { value: "Kariakoo", label: "Tanzania's largest market" },
-  { value: "$2B+", label: "Annual import volume" },
+  { value: "TZS-first", label: "Pricing across core business views" },
   { value: "10,000+", label: "Active traders" },
   { value: "24/7", label: "WhatsApp ordering" },
 ];
@@ -133,8 +133,8 @@ export default function LandingPage() {
             <span className="text-amber-300">Digitized.</span>
           </h1>
           <p className="mt-6 text-xl text-emerald-100 max-w-2xl mx-auto">
-            MaliLink connects importers and suppliers with seamless order management,
-            credit tracking, and mobile payments. Your buyers order via WhatsApp - no app needed.
+            MaliLink connects importers, suppliers, and admins with role-aware operations,
+            TZS-first business views, credit tracking, and mobile payment workflows. Buyers can still order through WhatsApp with no extra app required.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -172,7 +172,7 @@ export default function LandingPage() {
             Everything you need to run your import business
           </h2>
           <p className="text-center text-gray-500 mt-3 max-w-xl mx-auto">
-            Stop managing orders on paper and WhatsApp groups. MaliLink brings it all together.
+            Stop splitting trade operations across notebooks, chats, and spreadsheets. MaliLink brings ordering, payments, suppliers, and credit into one workflow.
           </p>
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
@@ -195,8 +195,7 @@ export default function LandingPage() {
                 Your buyers never need to download anything
               </h2>
               <p className="mt-4 text-gray-600">
-                The WhatsApp ordering layer removes buyer friction entirely. Buyers search products,
-                place orders, check status, and make payments - all from WhatsApp.
+                The WhatsApp ordering layer reduces buyer friction while the web dashboard stays the system of record. Buyers can search products, place orders, and follow progress from chat.
               </p>
               <div className="mt-6 space-y-3">
                 <div className="flex items-center gap-3">
@@ -209,7 +208,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-sm">3</span>
-                  <span className="text-gray-700">Search products, see prices, place order</span>
+                  <span className="text-gray-700">Search products, see TZS-first pricing, place order</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-sm">4</span>
@@ -262,7 +261,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <h2 className="text-3xl font-bold text-center text-gray-900">Simple, transparent pricing</h2>
           <p className="text-center text-gray-500 mt-3">
-            Plus 1.5% on transactions. Supplier listing fees separate.
+            Subscription pricing is shown in USD for planning, while core business workflows prioritize TZS in the product experience. Supplier listing fees are separate.
           </p>
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {pricingTiers.map((tier) => (
@@ -314,7 +313,7 @@ export default function LandingPage() {
             <div>
               <span className="text-xl font-bold text-white">MaliLink</span>
               <p className="mt-2 text-sm">
-                Digitizing Kariakoo&apos;s import economy. Order, credit, and payment management for wholesalers.
+                TZS-first trade operations for Kariakoo wholesalers with order, credit, supplier, and payment management.
               </p>
             </div>
             <div>

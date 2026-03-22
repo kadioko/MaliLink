@@ -9,6 +9,8 @@ declare module "next-auth" {
       name: string;
       role: UserRole;
       businessName: string;
+      emailVerified: boolean;
+      phoneVerified: boolean;
     };
   }
 }
@@ -18,5 +20,7 @@ declare module "next-auth/jwt" {
     id: string;
     role: UserRole;
     businessName: string;
+    emailVerified: boolean;
+    phoneVerified: boolean;
   }
 }

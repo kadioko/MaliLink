@@ -5,7 +5,7 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: "MaliLink - B2B Trade & Import Management",
   description:
-    "Digitizing Kariakoo's import economy. Order, credit, and payment management for wholesalers with WhatsApp ordering.",
+    "TZS-first trade operations for Kariakoo wholesalers with role-aware dashboards, WhatsApp ordering, credit tracking, and mobile payments.",
 };
 
 export default function RootLayout({

@@ -26,6 +26,8 @@ model User {
   email         String    @unique
   phone         String    @unique
   passwordHash  String
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
   name          String
   businessName  String
   role          UserRole
@@ -49,9 +51,31 @@ model User {
   receivedMessages Message[]     @relation("Receiver")
   whatsappSessions WhatsAppSession[]
   notifications   Notification[]
+  authTokens      AuthToken[]
   supplierListing SupplierListing?
 
   @@map("users")
+}
+
+enum AuthTokenType {
+  PASSWORD_RESET
+  EMAIL_VERIFICATION
+  PHONE_VERIFICATION
+}
+
+model AuthToken {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       AuthTokenType
+  tokenHash  String        @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([userId, type])
+  @@index([expiresAt])
+  @@map("auth_tokens")
 }
 
 // ─── Supplier Listings (paid placement) ─────────────────────
