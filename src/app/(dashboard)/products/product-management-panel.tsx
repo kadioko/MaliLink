@@ -49,8 +49,15 @@ type ProductManagementPanelProps = {
   initialProducts: ManagedProduct[];
   exchangeRate: number;
   onOptimisticProductCreated?: (product: ManagedProduct) => void;
-  onOptimisticProductUpdated?: (product: ManagedProduct) => void;
-  onOptimisticProductDeleted?: (productId: string) => void;
+  onOptimisticProductUpdated?: (product: ManagedProduct, previousProduct: ManagedProduct) => void;
+  onOptimisticProductDeleted?: (product: ManagedProduct) => void;
+  onOptimisticProductCommitted?: (tempId: string, product: ManagedProduct) => void;
+  onOptimisticProductFailed?: (
+    context:
+      | { type: "create"; tempId: string; message: string }
+      | { type: "update"; previous: ManagedProduct; message: string }
+      | { type: "delete"; previous: ManagedProduct; message: string },
+  ) => void;
 };
 
 export function ProductManagementPanel({
@@ -59,6 +66,8 @@ export function ProductManagementPanel({
   onOptimisticProductCreated,
   onOptimisticProductUpdated,
   onOptimisticProductDeleted,
+  onOptimisticProductCommitted,
+  onOptimisticProductFailed,
 }: ProductManagementPanelProps) {
   const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
@@ -135,6 +144,27 @@ export function ProductManagementPanel({
     };
 
     setSubmitting(true);
+    const tempId = editingId ?? `temp-product-${crypto.randomUUID()}`;
+    const optimisticProduct: ManagedProduct = {
+      id: tempId,
+      name: payload.name,
+      nameSwahili: payload.nameSwahili ?? null,
+      description: payload.description ?? null,
+      category: payload.category,
+      unit: payload.unit,
+      priceUsd: payload.priceUsd,
+      priceTzs: payload.priceTzs,
+      moq: payload.moq,
+      inStock: payload.inStock,
+      imageUrls: payload.imageUrls,
+      createdAt: new Date().toISOString(),
+    };
+    const previousProduct = editingId ? products.find((product) => product.id === editingId) ?? null : null;
+    if (editingId && previousProduct) {
+      onOptimisticProductUpdated?.(optimisticProduct, previousProduct);
+    } else {
+      onOptimisticProductCreated?.(optimisticProduct);
+    }
 
     try {
       const endpoint = editingId ? `/api/products/${editingId}` : "/api/products";
@@ -159,18 +189,20 @@ export function ProductManagementPanel({
           : [data.product!, ...current];
         return next;
       });
-      if (editingId) {
-        onOptimisticProductUpdated?.(data.product);
-      } else {
-        onOptimisticProductCreated?.(data.product);
-      }
+      onOptimisticProductCommitted?.(tempId, data.product);
       setSuccess(editingId ? "Product updated successfully." : "Product created successfully.");
       resetForm();
       startTransition(() => {
         router.refresh();
       });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to save product.");
+      const message = submitError instanceof Error ? submitError.message : "Failed to save product.";
+      setError(message);
+      if (editingId && previousProduct) {
+        onOptimisticProductFailed?.({ type: "update", previous: previousProduct, message });
+      } else {
+        onOptimisticProductFailed?.({ type: "create", tempId, message });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -180,6 +212,10 @@ export function ProductManagementPanel({
     setDeletingId(productId);
     setError(null);
     setSuccess(null);
+    const previousProduct = products.find((product) => product.id === productId);
+    if (previousProduct) {
+      onOptimisticProductDeleted?.(previousProduct);
+    }
 
     try {
       const response = await fetch(`/api/products/${productId}`, { method: "DELETE" });
@@ -192,13 +228,16 @@ export function ProductManagementPanel({
       if (editingId === productId) {
         resetForm();
       }
-      onOptimisticProductDeleted?.(productId);
       setSuccess("Product deleted successfully.");
       startTransition(() => {
         router.refresh();
       });
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete product.");
+      const message = deleteError instanceof Error ? deleteError.message : "Failed to delete product.";
+      setError(message);
+      if (previousProduct) {
+        onOptimisticProductFailed?.({ type: "delete", previous: previousProduct, message });
+      }
     } finally {
       setDeletingId(null);
     }

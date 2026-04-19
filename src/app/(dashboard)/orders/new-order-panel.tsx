@@ -38,9 +38,30 @@ type NewOrderPanelProps = {
     supplier: { businessName: string };
     importer: { businessName: string };
   }) => void;
+  onOptimisticOrderCommitted?: (
+    tempId: string,
+    order: {
+      id: string;
+      orderNumber: string;
+      totalUsd: number;
+      status: string;
+      source: string;
+      createdAt: string;
+      items: Array<{ productId: string; quantity: number; product: ProductOption }>;
+      supplier: { businessName: string };
+      importer: { businessName: string };
+    },
+  ) => void;
+  onOptimisticOrderFailed?: (tempId: string, message: string) => void;
 };
 
-export function NewOrderPanel({ suppliers, importerBusinessName, onOptimisticOrderCreated }: NewOrderPanelProps) {
+export function NewOrderPanel({
+  suppliers,
+  importerBusinessName,
+  onOptimisticOrderCreated,
+  onOptimisticOrderCommitted,
+  onOptimisticOrderFailed,
+}: NewOrderPanelProps) {
   const router = useRouter();
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>(suppliers[0]?.id ?? "");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -104,6 +125,18 @@ export function NewOrderPanel({ suppliers, importerBusinessName, onOptimisticOrd
     }
 
     setSubmitting(true);
+    const tempId = `temp-order-${crypto.randomUUID()}`;
+    onOptimisticOrderCreated?.({
+      id: tempId,
+      orderNumber: "Submitting...",
+      totalUsd: totalTzs / 2600,
+      status: "SUBMITTED",
+      source: "WEB",
+      createdAt: new Date().toISOString(),
+      items: selectedItems,
+      supplier: { businessName: selectedSupplier.businessName },
+      importer: { businessName: importerBusinessName },
+    });
 
     try {
       const response = await fetch("/api/orders", {
@@ -138,8 +171,8 @@ export function NewOrderPanel({ suppliers, importerBusinessName, onOptimisticOrd
       }
 
       setSuccess(`Order ${data.order?.orderNumber ?? "created"} submitted successfully.`);
-      if (data.order && onOptimisticOrderCreated) {
-        onOptimisticOrderCreated({
+      if (data.order) {
+        onOptimisticOrderCommitted?.(tempId, {
           id: data.order.id,
           orderNumber: data.order.orderNumber,
           totalUsd: data.order.totalUsd,
@@ -157,7 +190,9 @@ export function NewOrderPanel({ suppliers, importerBusinessName, onOptimisticOrd
         router.refresh();
       });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to create order.");
+      const message = submitError instanceof Error ? submitError.message : "Failed to create order.";
+      setError(message);
+      onOptimisticOrderFailed?.(tempId, message);
     } finally {
       setSubmitting(false);
     }

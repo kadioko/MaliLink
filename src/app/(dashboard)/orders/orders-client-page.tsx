@@ -21,6 +21,8 @@ type OrdersClientPageProps = {
     items: Array<unknown>;
     supplier: { businessName: string };
     importer: { businessName: string };
+    optimisticState?: "pending" | "failed";
+    optimisticMessage?: string;
   }>;
   suppliers: Array<{
     id: string;
@@ -108,7 +110,33 @@ export function OrdersClientPage({
         <NewOrderPanel
           suppliers={suppliers}
           onOptimisticOrderCreated={(order) => {
-            setOrders((current) => [order, ...current]);
+            setOrders((current) => [{ ...order, optimisticState: "pending" }, ...current]);
+          }}
+          onOptimisticOrderCommitted={(tempId, order) => {
+            setOrders((current) =>
+              current.map((entry) =>
+                entry.id === tempId ? { ...order, optimisticState: undefined, optimisticMessage: undefined } : entry,
+              ),
+            );
+          }}
+          onOptimisticOrderFailed={(tempId, message) => {
+            setOrders((current) => current.filter((entry) => entry.id !== tempId));
+            setOrders((current) => [
+              {
+                id: `${tempId}-failed`,
+                orderNumber: "Order not saved",
+                totalUsd: 0,
+                status: "CANCELLED",
+                source: "WEB",
+                createdAt: new Date().toISOString(),
+                items: [],
+                supplier: { businessName: "Submission failed" },
+                importer: { businessName: userName ?? "Your business" },
+                optimisticState: "failed",
+                optimisticMessage: message,
+              },
+              ...current,
+            ]);
           }}
           importerBusinessName={userName ?? "Your business"}
         />
@@ -182,15 +210,20 @@ export function OrdersClientPage({
             <tbody>
               {filteredOrders.length ? (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="border-b last:border-b-0 hover:bg-gray-50/70">
+                  <tr key={order.id} className={`border-b last:border-b-0 hover:bg-gray-50/70 ${order.optimisticState === "pending" ? "bg-amber-50/50 opacity-80" : ""} ${order.optimisticState === "failed" ? "bg-rose-50/70" : ""}`}>
                     <td className="px-4 py-3 text-sm font-medium text-gray-900">{order.orderNumber}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {role === "SUPPLIER" ? order.importer.businessName : order.supplier.businessName}
+                      <div>{role === "SUPPLIER" ? order.importer.businessName : order.supplier.businessName}</div>
+                      {order.optimisticMessage ? <div className="mt-1 text-xs text-rose-600">{order.optimisticMessage}</div> : null}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{order.items.length}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">{formatTzsFromUsd(order.totalUsd)}</td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      <Badge tone={statusToneMap[order.status] ?? "default"}>{order.status}</Badge>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge tone={statusToneMap[order.status] ?? "default"}>{order.status}</Badge>
+                        {order.optimisticState === "pending" ? <Badge tone="warning">Syncing</Badge> : null}
+                        {order.optimisticState === "failed" ? <Badge tone="danger">Rolled Back</Badge> : null}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       <span className="inline-flex items-center gap-2">

@@ -12,6 +12,7 @@ import {
   Store,
   Truck,
 } from "lucide-react";
+import { PricingSection } from "@/components/pricing-section";
 
 const features = [
   {
@@ -64,37 +65,6 @@ const operationsPillars = [
   "Supplier confirms quantity, MOQ, and shipment readiness",
   "Payments and credit exposure update in the same operating system",
   "Customs, delivery, and completion status stay visible end to end",
-];
-
-const pricingTiers = [
-  {
-    name: "Starter",
-    price: "$9",
-    period: "/mo",
-    summary: "For small traders replacing notebooks and chats with one system.",
-    features: ["Up to 10 orders per month", "WhatsApp ordering", "Basic supplier browsing", "Core reporting"],
-  },
-  {
-    name: "Business",
-    price: "$27",
-    period: "/mo",
-    summary: "For growing operators who need credit, payments, and deeper order visibility.",
-    features: [
-      "Unlimited orders",
-      "Credit tracking",
-      "Payment monitoring",
-      "Priority support",
-      "Advanced operational analytics",
-    ],
-    featured: true,
-  },
-  {
-    name: "Enterprise",
-    price: "$79",
-    period: "/mo",
-    summary: "For larger trade teams coordinating multiple users and partner workflows.",
-    features: ["Multi-user access", "Operational oversight", "Integration support", "Custom workflow setup"],
-  },
 ];
 
 export default function LandingPage() {
@@ -356,71 +326,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="pricing" className="px-5 py-14 sm:px-6">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-10 text-center">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Pricing</p>
-              <h2 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.05em] text-slate-950">
-                Start lean, then add operational depth.
-              </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
-                Subscription planning is shown in USD, while the product experience itself remains centered on Tanzanian shillings.
-              </p>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              {pricingTiers.map((tier) => (
-                <div
-                  key={tier.name}
-                  className={`surface-card relative rounded-[1.9rem] p-6 ${
-                    tier.featured ? "border-emerald-300 bg-emerald-950 text-white" : ""
-                  }`}
-                >
-                  {tier.featured ? (
-                    <div className="mb-5 inline-flex rounded-full bg-white/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-                      Most practical for growing teams
-                    </div>
-                  ) : null}
-                  <div className={`font-[var(--font-display)] text-2xl font-semibold ${tier.featured ? "text-white" : "text-slate-950"}`}>
-                    {tier.name}
-                  </div>
-                  <p className={`mt-3 text-sm leading-7 ${tier.featured ? "text-white/78" : "text-[color:var(--muted)]"}`}>
-                    {tier.summary}
-                  </p>
-                  <div className="mt-5 flex items-end gap-1">
-                    <span className={`font-[var(--font-display)] text-5xl font-bold tracking-[-0.05em] ${tier.featured ? "text-white" : "text-slate-950"}`}>
-                      {tier.price}
-                    </span>
-                    <span className={`pb-1 text-sm ${tier.featured ? "text-white/78" : "text-[color:var(--muted)]"}`}>{tier.period}</span>
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    {tier.features.map((feature) => (
-                      <div key={feature} className="flex items-start gap-3">
-                        <CheckCircle2 className={`mt-0.5 h-4.5 w-4.5 shrink-0 ${tier.featured ? "text-emerald-200" : "text-emerald-700"}`} />
-                        <span className={`text-sm leading-6 ${tier.featured ? "text-white/88" : "text-[color:var(--muted)]"}`}>
-                          {feature}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Link
-                    href="/register"
-                    className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold ${
-                      tier.featured
-                        ? "bg-white text-slate-950 hover:bg-[#fff7ea]"
-                        : "bg-slate-950 text-white hover:bg-emerald-800"
-                    }`}
-                  >
-                    Get started
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <PricingSection />
 
         <section className="px-5 pb-16 pt-6 sm:px-6">
           <div className="surface-card-strong mx-auto flex max-w-7xl flex-col gap-6 rounded-[2.25rem] px-6 py-8 sm:px-8 lg:flex-row lg:items-center lg:justify-between">

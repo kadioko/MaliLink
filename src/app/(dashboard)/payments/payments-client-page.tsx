@@ -8,6 +8,7 @@ import { MpesaPaymentPanel } from "./mpesa-payment-panel";
 
 type PaymentRecord = {
   id: string;
+  orderId?: string | null;
   amountUsd: number;
   amountTzs: number;
   platformFeeUsd: number;
@@ -16,6 +17,8 @@ type PaymentRecord = {
   transactionRef: string | null;
   mpesaReceiptNo: string | null;
   createdAt: Date | string;
+  optimisticState?: "pending" | "failed";
+  optimisticMessage?: string;
 };
 
 type PayableOrder = {
@@ -75,7 +78,7 @@ export function PaymentsClientPage({ role, initialPayments, initialUnpaidOrders 
         <MpesaPaymentPanel
           orders={unpaidOrders}
           onOptimisticPaymentStarted={(payment) => {
-            setPayments((current) => [payment, ...current]);
+            setPayments((current) => [{ ...payment, optimisticState: "pending" }, ...current]);
             setUnpaidOrders((current) =>
               current
                 .map((order) =>
@@ -86,9 +89,24 @@ export function PaymentsClientPage({ role, initialPayments, initialUnpaidOrders 
                 .filter((order) => order.paidTzs < order.totalTzs),
             );
           }}
+          onOptimisticPaymentFailed={(payment, message) => {
+            setPayments((current) => [
+              { ...payment, status: "FAILED", optimisticState: "failed", optimisticMessage: message },
+              ...current.filter((entry) => entry.id !== payment.id),
+            ]);
+            setUnpaidOrders((current) => {
+              const existing = current.find((order) => order.id === payment.orderId);
+              if (existing) {
+                return current.map((order) =>
+                  order.id === payment.orderId ? { ...order, paidTzs: Math.max(0, order.paidTzs - payment.amountTzs) } : order,
+                );
+              }
+              return current;
+            });
+          }}
           onOptimisticPaymentCompleted={(paymentId, updates) => {
             setPayments((current) =>
-              current.map((payment) => (payment.id === paymentId ? { ...payment, ...updates } : payment)),
+              current.map((payment) => (payment.id === paymentId ? { ...payment, ...updates, optimisticState: undefined, optimisticMessage: undefined } : payment)),
             );
           }}
         />
@@ -121,12 +139,21 @@ export function PaymentsClientPage({ role, initialPayments, initialUnpaidOrders 
                   </thead>
                   <tbody>
                     {payments.map((payment) => (
-                      <tr key={payment.id} className="border-b last:border-b-0 hover:bg-gray-50/70">
+                      <tr key={payment.id} className={`border-b last:border-b-0 hover:bg-gray-50/70 ${payment.optimisticState === "pending" ? "bg-amber-50/50 opacity-80" : ""} ${payment.optimisticState === "failed" ? "bg-rose-50/70" : ""}`}>
                         <td className="px-4 py-3 text-sm text-gray-600">{new Date(payment.createdAt).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{payment.method}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{formatTzsFromUsd(payment.amountUsd)}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600"><Badge tone={paymentToneMap[payment.status] ?? "default"}>{payment.status}</Badge></td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{payment.mpesaReceiptNo ?? payment.transactionRef ?? "-"}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge tone={paymentToneMap[payment.status] ?? "default"}>{payment.status}</Badge>
+                            {payment.optimisticState === "pending" ? <Badge tone="warning">Syncing</Badge> : null}
+                            {payment.optimisticState === "failed" ? <Badge tone="danger">Rolled Back</Badge> : null}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          <div>{payment.mpesaReceiptNo ?? payment.transactionRef ?? "-"}</div>
+                          {payment.optimisticMessage ? <div className="mt-1 text-xs text-rose-600">{payment.optimisticMessage}</div> : null}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

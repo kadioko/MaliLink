@@ -33,6 +33,21 @@ type MpesaPaymentPanelProps = {
     paymentId: string,
     updates: { status: string; transactionRef: string | null; mpesaReceiptNo: string | null },
   ) => void;
+  onOptimisticPaymentFailed?: (
+    payment: {
+      id: string;
+      orderId: string;
+      amountUsd: number;
+      amountTzs: number;
+      platformFeeUsd: number;
+      status: string;
+      method: string;
+      transactionRef: string | null;
+      mpesaReceiptNo: string | null;
+      createdAt: string;
+    },
+    message: string,
+  ) => void;
 };
 
 type PaymentStatusResponse = {
@@ -57,6 +72,7 @@ export function MpesaPaymentPanel({
   orders,
   onOptimisticPaymentStarted,
   onOptimisticPaymentCompleted,
+  onOptimisticPaymentFailed,
 }: MpesaPaymentPanelProps) {
   const router = useRouter();
   const [selectedOrderId, setSelectedOrderId] = useState(orders[0]?.id ?? "");
@@ -162,6 +178,23 @@ export function MpesaPaymentPanel({
     }
 
     setSubmitting(true);
+    const optimisticPayment = selectedOrder
+      ? {
+          id: `temp-payment-${crypto.randomUUID()}`,
+          orderId: selectedOrder.id,
+          amountUsd: outstandingAmount / 2600,
+          amountTzs: outstandingAmount,
+          platformFeeUsd: (outstandingAmount / 2600) * 0.015,
+          status: "PENDING",
+          method: "MPESA",
+          transactionRef: null,
+          mpesaReceiptNo: null,
+          createdAt: new Date().toISOString(),
+        }
+      : null;
+    if (optimisticPayment) {
+      onOptimisticPaymentStarted?.(optimisticPayment);
+    }
 
     try {
       const response = await fetch("/api/payments/snippe-session", {
@@ -203,14 +236,22 @@ export function MpesaPaymentPanel({
       setPaymentStatus(data.paymentStatus ?? "PENDING");
       setTransactionRef(data.reference ?? null);
       setCheckoutUrl(data.checkoutUrl ?? null);
-      if (data.payment) {
-        onOptimisticPaymentStarted?.(data.payment);
+      if (data.payment && optimisticPayment) {
+        onOptimisticPaymentCompleted?.(optimisticPayment.id, {
+          status: data.payment.status,
+          transactionRef: data.payment.transactionRef,
+          mpesaReceiptNo: data.payment.mpesaReceiptNo,
+        });
       }
       startTransition(() => {
         router.refresh();
       });
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Failed to start M-Pesa checkout.");
+      const message = submitError instanceof Error ? submitError.message : "Failed to start M-Pesa checkout.";
+      setError(message);
+      if (optimisticPayment) {
+        onOptimisticPaymentFailed?.(optimisticPayment, message);
+      }
     } finally {
       setSubmitting(false);
     }

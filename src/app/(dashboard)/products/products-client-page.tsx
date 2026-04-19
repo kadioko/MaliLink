@@ -20,6 +20,8 @@ type ProductRecord = {
   imageUrls: string[];
   createdAt: Date | string;
   supplier?: { businessName: string; location: string | null };
+  optimisticState?: "pending" | "failed";
+  optimisticMessage?: string;
 };
 
 type ProductsClientPageProps = {
@@ -74,22 +76,53 @@ export function ProductsClientPage({
           onOptimisticProductCreated={(product) => {
             const normalized = {
               ...product,
+              optimisticState: "pending" as const,
               supplier: currentSupplier ?? { businessName: "Your business", location: null },
             };
-            setSupplierProducts((current) => [product, ...current]);
+            setSupplierProducts((current) => [{ ...product, optimisticState: "pending" }, ...current]);
             setProducts((current) => [normalized, ...current]);
           }}
-          onOptimisticProductUpdated={(product) => {
-            setSupplierProducts((current) => current.map((entry) => (entry.id === product.id ? product : entry)));
+          onOptimisticProductUpdated={(product, previousProduct) => {
+            setSupplierProducts((current) => current.map((entry) => (entry.id === product.id ? { ...product, optimisticState: "pending" } : entry)));
             setProducts((current) =>
               current.map((entry) =>
-                entry.id === product.id ? { ...product, supplier: entry.supplier ?? currentSupplier ?? { businessName: "Your business", location: null } } : entry,
+                entry.id === product.id ? { ...product, optimisticState: "pending", supplier: entry.supplier ?? currentSupplier ?? { businessName: "Your business", location: null } } : entry,
               ),
             );
           }}
-          onOptimisticProductDeleted={(productId) => {
-            setSupplierProducts((current) => current.filter((entry) => entry.id !== productId));
-            setProducts((current) => current.filter((entry) => entry.id !== productId));
+          onOptimisticProductDeleted={(product) => {
+            setSupplierProducts((current) => current.filter((entry) => entry.id !== product.id));
+            setProducts((current) => current.filter((entry) => entry.id !== product.id));
+          }}
+          onOptimisticProductCommitted={(tempId, product) => {
+            setSupplierProducts((current) => current.map((entry) => (entry.id === tempId || entry.id === product.id ? product : entry)));
+            setProducts((current) =>
+              current.map((entry) =>
+                entry.id === tempId || entry.id === product.id
+                  ? { ...product, supplier: entry.supplier ?? currentSupplier ?? { businessName: "Your business", location: null } }
+                  : entry,
+              ),
+            );
+          }}
+          onOptimisticProductFailed={(context) => {
+            if (context.type === "create") {
+              setSupplierProducts((current) => current.filter((entry) => entry.id !== context.tempId));
+              setProducts((current) => current.filter((entry) => entry.id !== context.tempId));
+            }
+            if (context.type === "update") {
+              setSupplierProducts((current) => current.map((entry) => (entry.id === context.previous.id ? { ...context.previous, optimisticState: "failed", optimisticMessage: context.message } : entry)));
+              setProducts((current) =>
+                current.map((entry) =>
+                  entry.id === context.previous.id
+                    ? { ...context.previous, optimisticState: "failed", optimisticMessage: context.message, supplier: entry.supplier ?? currentSupplier ?? { businessName: "Your business", location: null } }
+                    : entry,
+                ),
+              );
+            }
+            if (context.type === "delete") {
+              setSupplierProducts((current) => [{ ...context.previous, optimisticState: "failed", optimisticMessage: context.message }, ...current]);
+              setProducts((current) => [{ ...context.previous, optimisticState: "failed", optimisticMessage: context.message, supplier: currentSupplier ?? { businessName: "Your business", location: null } }, ...current]);
+            }
           }}
         />
       ) : null}
@@ -135,7 +168,7 @@ export function ProductsClientPage({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {visibleProducts.length ? (
           visibleProducts.map((product) => (
-            <div key={product.id} className="surface-card overflow-hidden rounded-[1.75rem] transition hover:-translate-y-1 hover:shadow-md">
+            <div key={product.id} className={`surface-card overflow-hidden rounded-[1.75rem] transition hover:-translate-y-1 hover:shadow-md ${product.optimisticState === "pending" ? "ring-1 ring-amber-300 opacity-80" : ""} ${product.optimisticState === "failed" ? "ring-1 ring-rose-300" : ""}`}>
               <div className="relative aspect-[1.05/1] overflow-hidden bg-gradient-to-br from-emerald-100 via-white to-amber-100">
                 {product.imageUrls[0] ? (
                   <img src={product.imageUrls[0]} alt={product.name} className="h-full w-full object-cover" />
@@ -165,12 +198,17 @@ export function ProductsClientPage({
                 <div className="mt-4 min-h-[72px] line-clamp-3 text-sm text-[color:var(--muted)]">
                   {product.description ?? "No description provided yet. Add details to make this listing easier to buy from."}
                 </div>
+                {product.optimisticMessage ? <div className="mt-2 text-xs text-rose-600">{product.optimisticMessage}</div> : null}
                 <div className="mt-5 flex items-end justify-between gap-3">
                   <div>
                     <div className="font-[var(--font-display)] text-2xl font-bold tracking-[-0.04em] text-slate-950">{formatTzsFromUsd(product.priceUsd)}</div>
                     <div className="text-xs text-[color:var(--muted)]">MOQ {product.moq} • {product.unit}</div>
                   </div>
-                  <Badge tone="default">{product.imageUrls[0] ? "Photo ready" : "Needs media"}</Badge>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge tone="default">{product.imageUrls[0] ? "Photo ready" : "Needs media"}</Badge>
+                    {product.optimisticState === "pending" ? <Badge tone="warning">Syncing</Badge> : null}
+                    {product.optimisticState === "failed" ? <Badge tone="danger">Rolled Back</Badge> : null}
+                  </div>
                 </div>
               </div>
             </div>

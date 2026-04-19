@@ -1,13 +1,13 @@
 export const PLATFORM_FEE_RATE = 0.015; // 1.5% transaction fee
 export const DEFAULT_CREDIT_TERM_DAYS = 30;
 export const DEFAULT_INTEREST_RATE = 0.05; // 5% monthly
-export const DEFAULT_USD_TO_TZS_RATE = 2500;
+export const DEFAULT_USD_TO_TZS_RATE = 2600;
 
 export const SUBSCRIPTION_PLANS = {
   starter: {
     name: "Starter",
-    priceUsd: 9,
-    priceTzs: 22500,
+    priceUsd: 11.15,
+    priceTzs: 29000,
     features: [
       "Up to 50 orders/month",
       "Basic analytics",
@@ -17,8 +17,8 @@ export const SUBSCRIPTION_PLANS = {
   },
   business: {
     name: "Business",
-    priceUsd: 27,
-    priceTzs: 67500,
+    priceUsd: 30.38,
+    priceTzs: 79000,
     features: [
       "Unlimited orders",
       "Credit management",
@@ -30,8 +30,8 @@ export const SUBSCRIPTION_PLANS = {
   },
   enterprise: {
     name: "Enterprise",
-    priceUsd: 79,
-    priceTzs: 197500,
+    priceUsd: 95.77,
+    priceTzs: 249000,
     features: [
       "Everything in Business",
       "Multi-warehouse tracking",
