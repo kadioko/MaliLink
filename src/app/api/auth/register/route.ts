@@ -18,9 +18,15 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const data = registerSchema.parse(body);
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const normalizedPhone = data.phone.trim();
+    const normalizedName = data.name.trim();
+    const normalizedBusinessName = data.businessName.trim();
+    const normalizedLocation = data.location?.trim() || undefined;
+    const normalizedTinNumber = data.tinNumber?.trim() || undefined;
 
     const existing = await db.user.findFirst({
-      where: { OR: [{ email: data.email }, { phone: data.phone }] },
+      where: { OR: [{ email: normalizedEmail }, { phone: normalizedPhone }] },
     });
 
     if (existing) {
@@ -34,15 +40,15 @@ export async function POST(req: NextRequest) {
 
     const user = await db.user.create({
       data: {
-        email: data.email,
-        phone: data.phone,
+        email: normalizedEmail,
+        phone: normalizedPhone,
         passwordHash,
-        name: data.name,
-        businessName: data.businessName,
+        name: normalizedName,
+        businessName: normalizedBusinessName,
         role: data.role,
-        location: data.location,
-        tinNumber: data.tinNumber,
-        whatsappId: data.phone,
+        location: normalizedLocation,
+        tinNumber: normalizedTinNumber,
+        whatsappId: normalizedPhone,
       },
       select: {
         id: true,
@@ -56,15 +62,18 @@ export async function POST(req: NextRequest) {
     // Auto-create supplier listing if supplier
     if (data.role === "SUPPLIER") {
       await db.supplierListing.create({
-        data: { supplierId: user.id },
+        data: { supplierId: user.id, categories: [] },
       });
     }
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
+    console.error("Registration failed", error);
+
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
     }
+
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

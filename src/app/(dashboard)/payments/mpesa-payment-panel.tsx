@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, CheckCircle2, Clock3, ReceiptText, SmartphoneCharging } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { formatTzs } from "@/lib/utils";
-import { EmptyState } from "@/components/dashboard-ui";
+import { Badge, EmptyState } from "@/components/dashboard-ui";
 
 type PayableOrder = {
   id: string;
@@ -28,7 +30,15 @@ type PaymentStatusResponse = {
   };
 };
 
+const paymentToneMap: Record<string, "warning" | "success" | "danger" | "info" | "default"> = {
+  PENDING: "warning",
+  PROCESSING: "info",
+  COMPLETED: "success",
+  FAILED: "danger",
+};
+
 export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
+  const router = useRouter();
   const [selectedOrderId, setSelectedOrderId] = useState(orders[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -42,7 +52,7 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
 
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? null,
-    [orders, selectedOrderId]
+    [orders, selectedOrderId],
   );
 
   const hasOrders = orders.length > 0;
@@ -68,12 +78,16 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
 
         if (data.payment.status === "COMPLETED") {
           setSuccess("Payment completed successfully. Your receipt/reference is available below.");
+          startTransition(() => {
+            router.refresh();
+          });
         }
 
         if (data.payment.status === "FAILED") {
           setError("Payment failed. You can retry the M-Pesa checkout for this order.");
         }
       } catch {
+        return;
       }
     }, 5000);
 
@@ -82,11 +96,15 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
 
   if (!hasOrders) {
     return (
-      <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="surface-card rounded-[1.85rem] p-5 sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">M-Pesa Checkout</h2>
-            <p className="mt-1 text-sm text-gray-500">Start a Snippe-hosted M-Pesa payment for any unpaid order balance in TZS.</p>
+            <h2 className="font-[var(--font-display)] text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+              M-Pesa Checkout
+            </h2>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">
+              Start a Snippe-hosted M-Pesa payment for any unpaid order balance in TZS.
+            </p>
           </div>
           <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">Snippe Connected</div>
         </div>
@@ -148,6 +166,9 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
       setPaymentStatus(data.paymentStatus ?? "PENDING");
       setTransactionRef(data.reference ?? null);
       setCheckoutUrl(data.checkoutUrl ?? null);
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to start M-Pesa checkout.");
     } finally {
@@ -156,11 +177,15 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border bg-white p-5 shadow-sm">
+    <form onSubmit={handleSubmit} className="surface-card rounded-[1.85rem] p-5 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">M-Pesa Checkout</h2>
-          <p className="mt-1 text-sm text-gray-500">Start a Snippe-hosted M-Pesa payment for any unpaid order balance in TZS.</p>
+          <h2 className="font-[var(--font-display)] text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+            M-Pesa Checkout
+          </h2>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">
+            Start a Snippe-hosted M-Pesa payment for any unpaid order balance in TZS.
+          </p>
         </div>
         <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">Snippe Connected</div>
       </div>
@@ -181,7 +206,7 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
             >
               {orders.map((order) => (
                 <option key={order.id} value={order.id}>
-                  {order.orderNumber} • {order.supplierName}
+                  {order.orderNumber} - {order.supplierName}
                 </option>
               ))}
             </select>
@@ -190,44 +215,60 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
           <div className="mt-4 space-y-3">
             {orders.map((order) => {
               const remaining = Math.max(order.totalTzs - order.paidTzs, 0);
+              const active = order.id === selectedOrderId;
+
               return (
-                <div key={order.id} className="rounded-2xl border border-gray-200 p-4">
+                <button
+                  key={order.id}
+                  type="button"
+                  onClick={() => setSelectedOrderId(order.id)}
+                  className={`w-full rounded-[1.4rem] border p-4 text-left transition ${
+                    active ? "border-emerald-300 bg-emerald-50/80" : "border-gray-200 bg-white hover:border-emerald-200"
+                  }`}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="font-semibold text-gray-900">{order.orderNumber}</div>
-                      <div className="text-sm text-gray-500">{order.supplierName} • {order.status}</div>
+                      <div className="mt-1 text-sm text-gray-500">{order.supplierName}</div>
                     </div>
-                    <div className="text-right text-sm">
-                      <div className="font-medium text-gray-900">Outstanding {formatTzs(remaining)}</div>
-                      <div className="text-gray-500">Paid {formatTzs(order.paidTzs)}</div>
+                    <Badge tone="default">{order.status}</Badge>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-slate-50 px-3 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Outstanding</div>
+                      <div className="mt-1 font-semibold text-slate-950">{formatTzs(remaining)}</div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 px-3 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Already paid</div>
+                      <div className="mt-1 font-semibold text-slate-950">{formatTzs(order.paidTzs)}</div>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-          <h3 className="text-base font-semibold text-gray-900">Checkout Summary</h3>
+        <div className="rounded-[1.6rem] border border-gray-200 bg-gray-50 p-4">
+          <h3 className="font-[var(--font-display)] text-xl font-semibold text-slate-950">Checkout Summary</h3>
           {selectedOrder ? (
             <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center justify-between text-gray-500">
+              <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-gray-500">
                 <span>Order</span>
                 <span className="font-medium text-gray-900">{selectedOrder.orderNumber}</span>
               </div>
-              <div className="flex items-center justify-between text-gray-500">
+              <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-gray-500">
                 <span>Supplier</span>
                 <span className="font-medium text-gray-900">{selectedOrder.supplierName}</span>
               </div>
-              <div className="flex items-center justify-between text-gray-500">
+              <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-gray-500">
                 <span>Outstanding</span>
                 <span className="text-lg font-semibold text-gray-900">{formatTzs(outstandingAmount)}</span>
               </div>
               {paymentStatus ? (
-                <div className="flex items-center justify-between text-gray-500">
+                <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-gray-500">
                   <span>Payment status</span>
-                  <span className="font-medium text-gray-900">{paymentStatus}</span>
+                  <Badge tone={paymentToneMap[paymentStatus] ?? "default"}>{paymentStatus}</Badge>
                 </div>
               ) : null}
             </div>
@@ -235,12 +276,34 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
             <div className="mt-4 text-sm text-gray-500">No unpaid orders available for checkout.</div>
           )}
 
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-white px-3 py-3 text-center">
+              <SmartphoneCharging className="mx-auto h-5 w-5 text-emerald-700" />
+              <div className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">Request</div>
+            </div>
+            <div className="rounded-2xl bg-white px-3 py-3 text-center">
+              <Clock3 className="mx-auto h-5 w-5 text-amber-700" />
+              <div className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">Track</div>
+            </div>
+            <div className="rounded-2xl bg-white px-3 py-3 text-center">
+              <ReceiptText className="mx-auto h-5 w-5 text-sky-700" />
+              <div className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-500">Receipt</div>
+            </div>
+          </div>
+
           {error ? <div className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
-          {success ? <div className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
+          {success ? (
+            <div className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              {success}
+            </div>
+          ) : null}
 
           {transactionRef || receiptRef || paidAt ? (
             <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 text-sm">
-              <div className="font-medium text-gray-900">Payment tracking</div>
+              <div className="flex items-center gap-2 font-medium text-gray-900">
+                <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600" />
+                Payment tracking
+              </div>
               <div className="mt-3 space-y-2 text-gray-600">
                 {transactionRef ? (
                   <div className="flex items-center justify-between gap-3">
@@ -269,9 +332,10 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
               href={checkoutUrl}
               target="_blank"
               rel="noreferrer"
-              className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-black"
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-black"
             >
               Open Snippe Checkout
+              <ArrowUpRight className="h-4 w-4" />
             </a>
           ) : null}
 

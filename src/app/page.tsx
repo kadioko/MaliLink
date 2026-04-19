@@ -1,42 +1,69 @@
 import Link from "next/link";
+import {
+  ArrowRight,
+  BarChart3,
+  BadgeDollarSign,
+  CheckCircle2,
+  CreditCard,
+  Landmark,
+  MessageCircleMore,
+  PackageCheck,
+  ShieldCheck,
+  Store,
+  Truck,
+} from "lucide-react";
 
 const features = [
   {
-    icon: "📱",
-    title: "WhatsApp Ordering",
+    icon: MessageCircleMore,
+    title: "WhatsApp-led ordering",
     description:
-      "Buyers can browse products and place orders through WhatsApp with no app download required, while orders still flow back into the web dashboard.",
+      "Let buyers discover products, request quotes, and place orders from chat while MaliLink keeps the operational record clean.",
   },
   {
-    icon: "📦",
-    title: "Order Management",
+    icon: PackageCheck,
+    title: "Trade workflow visibility",
     description:
-      "Track orders from submission to customs clearance to delivery. Real-time status updates for both importers and suppliers.",
+      "Track progress from product discovery to customs and delivery with a single operating view for importers and suppliers.",
   },
   {
-    icon: "🏦",
-    title: "Credit System",
+    icon: Landmark,
+    title: "TZS-first finance views",
     description:
-      "Suppliers extend credit to trusted importers. Built-in credit scoring, repayment tracking, and overdue management.",
+      "Keep revenue, payables, and credit exposure legible in Tanzanian shillings even when upstream trade is quoted in USD.",
   },
   {
-    icon: "💳",
-    title: "Mobile Payments",
+    icon: CreditCard,
+    title: "Mobile-money collections",
     description:
-      "Track mobile-money and payment activity in one place, with importer checkout flows and platform-wide operational visibility.",
+      "Follow M-Pesa and other payment activity in one system, from buyer checkout to final reconciliation.",
   },
   {
-    icon: "🏪",
-    title: "Supplier Directory",
+    icon: Store,
+    title: "Verified supplier network",
     description:
-      "Verified supplier listings with ratings, reviews, and product catalogs. Find reliable suppliers from China, Dubai, India, and more.",
+      "Surface trusted supplier listings, ratings, and inventory so buyers can move faster with more confidence.",
   },
   {
-    icon: "🛃",
-    title: "Import Tracking",
+    icon: ShieldCheck,
+    title: "Role-aware controls",
     description:
-      "Track shipments through customs with real-time updates. Duty calculations, documentation, and clearance status.",
+      "Importers, suppliers, and admins each get the tools and visibility they need without clutter or duplicated work.",
   },
+];
+
+const proofPoints = [
+  { value: "TZS-first", label: "financial reporting across the product" },
+  { value: "24/7", label: "buyer ordering through WhatsApp" },
+  { value: "Multi-role", label: "views for importers, suppliers, and admins" },
+  { value: "Kariakoo", label: "operations model built around real trade flow" },
+];
+
+const operationsPillars = [
+  "Buyer places an order through WhatsApp or the web dashboard",
+  "Supplier confirms quantity, MOQ, and shipment readiness",
+  "Payments and credit exposure update in the same operating system",
+  "Customs, delivery, and completion status stay visible end to end",
 ];
 
 const pricingTiers = [
@@ -44,307 +71,386 @@ const pricingTiers = [
     name: "Starter",
     price: "$9",
     period: "/mo",
-    description: "For small import businesses getting started",
-    features: [
-      "Up to 10 orders/month",
-      "WhatsApp ordering",
-      "Basic reporting",
-      "M-Pesa payments",
-      "Email support",
-    ],
+    summary: "For small traders replacing notebooks and chats with one system.",
+    features: ["Up to 10 orders per month", "WhatsApp ordering", "Basic supplier browsing", "Core reporting"],
   },
   {
     name: "Business",
     price: "$27",
     period: "/mo",
-    description: "For growing trading teams managing more volume",
-    popular: true,
+    summary: "For growing operators who need credit, payments, and deeper order visibility.",
     features: [
       "Unlimited orders",
-      "WhatsApp ordering",
-      "Credit management",
-      "All payment methods",
-      "Advanced analytics",
+      "Credit tracking",
+      "Payment monitoring",
       "Priority support",
-      "Customs tracking",
+      "Advanced operational analytics",
     ],
+    featured: true,
   },
   {
     name: "Enterprise",
     price: "$79",
     period: "/mo",
-    description: "For larger multi-user trading operations",
-    features: [
-      "Everything in Business",
-      "Multi-user access",
-      "API access",
-      "Custom integrations",
-      "Dedicated account manager",
-      "Bulk order tools",
-      "White-label options",
-    ],
+    summary: "For larger trade teams coordinating multiple users and partner workflows.",
+    features: ["Multi-user access", "Operational oversight", "Integration support", "Custom workflow setup"],
   },
-];
-
-const stats = [
-  { value: "Kariakoo", label: "Tanzania's largest market" },
-  { value: "TZS-first", label: "Pricing across core business views" },
-  { value: "10,000+", label: "Active traders" },
-  { value: "24/7", label: "WhatsApp ordering" },
 ];
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-emerald-700">MaliLink</span>
-            <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-              Beta
-            </span>
-          </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <a href="#features" className="hover:text-emerald-600">Features</a>
-            <a href="#pricing" className="hover:text-emerald-600">Pricing</a>
-            <a href="#whatsapp" className="hover:text-emerald-600">WhatsApp</a>
-          </nav>
+      <header className="sticky top-0 z-30 border-b border-black/5 bg-[#faf6ee]/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-emerald-600">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-bold text-white">
+              ML
+            </div>
+            <div>
+              <div className="font-[var(--font-display)] text-xl font-bold tracking-[-0.05em] text-emerald-800">
+                MaliLink
+              </div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted-soft)]">
+                Trade Operating System
+              </div>
+            </div>
+          </div>
+
+          <nav className="hidden items-center gap-6 text-sm font-medium text-[color:var(--muted)] lg:flex">
+            <a href="#platform" className="hover:text-slate-950">
+              Platform
+            </a>
+            <a href="#workflow" className="hover:text-slate-950">
+              Workflow
+            </a>
+            <a href="#pricing" className="hover:text-slate-950">
+              Pricing
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="hidden text-sm font-medium text-[color:var(--muted)] hover:text-slate-950 sm:inline-flex">
               Sign In
             </Link>
             <Link
               href="/register"
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:-translate-y-0.5 hover:bg-emerald-800"
             >
-              Get Started
+              Launch MaliLink
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 text-white py-20">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-            Kariakoo&apos;s Import Economy,
-            <br />
-            <span className="text-amber-300">Digitized.</span>
-          </h1>
-          <p className="mt-6 text-xl text-emerald-100 max-w-2xl mx-auto">
-            MaliLink connects importers, suppliers, and admins with role-aware operations,
-            TZS-first business views, credit tracking, and mobile payment workflows. Buyers can still order through WhatsApp with no extra app required.
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/register"
-              className="px-8 py-4 bg-white text-emerald-700 rounded-xl text-lg font-semibold hover:bg-gray-50 transition"
-            >
-              Start Free Trial
-            </Link>
-            <a
-              href="#whatsapp"
-              className="px-8 py-4 border-2 border-white/50 text-white rounded-xl text-lg font-semibold hover:bg-white/10 transition"
-            >
-              See WhatsApp Demo
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats */}
-      <section className="bg-white border-b py-12">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-emerald-700">{stat.value}</div>
-              <div className="text-sm text-gray-500 mt-1">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-900">
-            Everything you need to run your import business
-          </h2>
-          <p className="text-center text-gray-500 mt-3 max-w-xl mx-auto">
-            Stop splitting trade operations across notebooks, chats, and spreadsheets. MaliLink brings ordering, payments, suppliers, and credit into one workflow.
-          </p>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature) => (
-              <div key={feature.title} className="bg-white rounded-xl p-6 shadow-sm border hover:shadow-md transition">
-                <div className="text-3xl mb-3">{feature.icon}</div>
-                <h3 className="text-lg font-semibold text-gray-900">{feature.title}</h3>
-                <p className="mt-2 text-gray-500 text-sm">{feature.description}</p>
+      <main>
+        <section className="relative overflow-hidden px-5 pb-14 pt-10 sm:px-6 sm:pt-14">
+          <div className="hero-orb -left-10 top-16 h-40 w-40 bg-amber-200/80" />
+          <div className="hero-orb right-8 top-6 h-56 w-56 bg-emerald-200/70" />
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr,0.9fr] lg:items-center">
+            <div className="relative">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/85 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                <BarChart3 className="h-3.5 w-3.5" />
+                Built for Kariakoo wholesalers
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* WhatsApp Demo */}
-      <section id="whatsapp" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900">
-                Your buyers never need to download anything
-              </h2>
-              <p className="mt-4 text-gray-600">
-                The WhatsApp ordering layer reduces buyer friction while the web dashboard stays the system of record. Buyers can search products, place orders, and follow progress from chat.
+              <h1 className="max-w-3xl font-[var(--font-display)] text-5xl font-bold tracking-[-0.065em] text-slate-950 sm:text-6xl lg:text-7xl">
+                Move your import business from scattered chats to one trade command center.
+              </h1>
+              <p className="mt-6 max-w-2xl text-balance text-lg leading-8 text-[color:var(--muted)] sm:text-xl">
+                MaliLink connects suppliers, importers, payments, and credit tracking in a workflow designed for East African trade teams that already live in WhatsApp.
               </p>
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-sm">1</span>
-                  <span className="text-gray-700">Buyer sends &quot;Hi&quot; to your WhatsApp number</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-sm">2</span>
-                  <span className="text-gray-700">Bot shows menu in English & Swahili</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-sm">3</span>
-                  <span className="text-gray-700">Search products, see TZS-first pricing, place order</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-sm">4</span>
-                  <span className="text-gray-700">Order appears in your MaliLink dashboard</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Chat mockup */}
-            <div className="bg-gray-100 rounded-2xl p-4 max-w-sm mx-auto">
-              <div className="bg-emerald-700 text-white rounded-t-xl px-4 py-3 flex items-center gap-3">
-                <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center font-bold text-sm">M</div>
-                <div>
-                  <div className="font-semibold text-sm">MaliLink Bot</div>
-                  <div className="text-xs text-emerald-200">Online</div>
-                </div>
-              </div>
-              <div className="bg-[#e5ddd5] p-3 space-y-2 rounded-b-xl min-h-[300px]">
-                <div className="bg-white rounded-lg p-2 px-3 text-sm max-w-[80%] shadow-sm">
-                  <p className="font-semibold text-emerald-700">MaliLink Bot</p>
-                  <p>Karibu! Choose an option:</p>
-                  <p className="mt-1">1. Tafuta bidhaa - Search</p>
-                  <p>2. Angalia bei - Browse</p>
-                  <p>3. Oda mpya - New order</p>
-                  <p>4. Hali ya oda - Status</p>
-                </div>
-                <div className="bg-[#dcf8c6] rounded-lg p-2 px-3 text-sm max-w-[60%] ml-auto shadow-sm">
-                  <p>1</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 px-3 text-sm max-w-[80%] shadow-sm">
-                  <p>Type product name to search:</p>
-                </div>
-                <div className="bg-[#dcf8c6] rounded-lg p-2 px-3 text-sm max-w-[60%] ml-auto shadow-sm">
-                  <p>phone charger</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 px-3 text-sm max-w-[80%] shadow-sm">
-                  <p className="font-medium">Results:</p>
-                  <p>1. USB-C Charger 65W</p>
-                  <p className="text-gray-500">   Guangzhou Electronics</p>
-                  <p className="text-gray-500">   $2.50/piece (MOQ: 100)</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="pricing" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-900">Simple, transparent pricing</h2>
-          <p className="text-center text-gray-500 mt-3">
-            Subscription pricing is shown in USD for planning, while core business workflows prioritize TZS in the product experience. Supplier listing fees are separate.
-          </p>
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {pricingTiers.map((tier) => (
-              <div
-                key={tier.name}
-                className={`bg-white rounded-xl p-6 shadow-sm border ${
-                  tier.popular ? "border-emerald-500 ring-2 ring-emerald-500 relative" : ""
-                }`}
-              >
-                {tier.popular && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs font-medium px-3 py-1 rounded-full">
-                    Most Popular
-                  </span>
-                )}
-                <h3 className="text-lg font-semibold text-gray-900">{tier.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">{tier.description}</p>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold text-gray-900">{tier.price}</span>
-                  <span className="text-gray-500">{tier.period}</span>
-                </div>
-                <ul className="mt-6 space-y-3">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="text-emerald-500">&#10003;</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/register"
-                  className={`mt-6 block text-center py-2 rounded-lg font-medium transition ${
-                    tier.popular
-                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-900/15 hover:-translate-y-0.5 hover:bg-emerald-800"
                 >
-                  Get Started
+                  Start free trial
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
+                <a
+                  href="#workflow"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-black/10 bg-white/80 px-6 py-3.5 text-base font-semibold text-slate-900 shadow-sm hover:bg-white"
+                >
+                  See the workflow
+                </a>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <span className="text-xl font-bold text-white">MaliLink</span>
-              <p className="mt-2 text-sm">
-                TZS-first trade operations for Kariakoo wholesalers with order, credit, supplier, and payment management.
+              <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {proofPoints.map((item) => (
+                  <div key={item.label} className="surface-card rounded-[1.5rem] px-4 py-4">
+                    <div className="font-[var(--font-display)] text-2xl font-bold tracking-[-0.04em] text-slate-950">
+                      {item.value}
+                    </div>
+                    <div className="mt-1 text-xs leading-5 text-[color:var(--muted)]">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="surface-card-strong relative overflow-hidden rounded-[2rem] p-4 sm:p-5">
+              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-r from-emerald-600 via-emerald-500 to-amber-400 opacity-90" />
+              <div className="relative rounded-[1.5rem] bg-[#f7f2e8] p-4 pt-24 shadow-inner">
+                <div className="mb-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-[1.25rem] bg-slate-950 p-4 text-white">
+                    <div className="text-[11px] uppercase tracking-[0.2em] text-white/65">Orders in motion</div>
+                    <div className="mt-3 font-[var(--font-display)] text-3xl font-bold">148</div>
+                    <div className="mt-1 text-xs text-white/70">Across importer and supplier workspaces</div>
+                  </div>
+                  <div className="rounded-[1.25rem] bg-white p-4 shadow-sm">
+                    <div className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted-soft)]">
+                      Outstanding credit
+                    </div>
+                    <div className="mt-3 font-[var(--font-display)] text-3xl font-bold text-slate-950">
+                      TZS 42.6M
+                    </div>
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">Visible without switching systems</div>
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between gap-4 border-b border-black/5 pb-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-950">WhatsApp live order</div>
+                      <div className="text-xs text-[color:var(--muted)]">Buyer flow mirrored in dashboard</div>
+                    </div>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                      <MessageCircleMore className="h-3.5 w-3.5" />
+                      Sync active
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 py-4">
+                    <div className="max-w-[82%] rounded-2xl rounded-bl-md bg-[#ece6dd] px-4 py-3 text-sm text-slate-800">
+                      Karibu. Type the product you need or choose:
+                      <div className="mt-2 text-xs text-[color:var(--muted)]">Search, Browse, New order, Order status</div>
+                    </div>
+                    <div className="ml-auto max-w-[70%] rounded-2xl rounded-br-md bg-emerald-600 px-4 py-3 text-sm text-white shadow-sm">
+                      Need 65W USB-C chargers, MOQ 100.
+                    </div>
+                    <div className="max-w-[86%] rounded-2xl rounded-bl-md bg-[#ece6dd] px-4 py-3 text-sm text-slate-800">
+                      Supplier found: Guangzhou Electronics
+                      <div className="mt-2 text-xs text-[color:var(--muted)]">
+                        TZS-first estimate, supplier, and order draft sent to MaliLink dashboard
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-emerald-50 p-3">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-emerald-700">Settlement</div>
+                      <div className="mt-1 text-sm font-semibold text-slate-950">M-Pesa tracked</div>
+                    </div>
+                    <div className="rounded-2xl bg-amber-50 p-3">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-amber-700">Customs</div>
+                      <div className="mt-1 text-sm font-semibold text-slate-950">Status visible</div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-100 p-3">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-slate-700">Counterparty</div>
+                      <div className="mt-1 text-sm font-semibold text-slate-950">Supplier verified</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="platform" className="px-5 py-14 sm:px-6">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Platform capabilities</p>
+                <h2 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.05em] text-slate-950">
+                  Built around the way trade teams already work.
+                </h2>
+              </div>
+              <p className="max-w-2xl text-base leading-7 text-[color:var(--muted)]">
+                The product is strongest when it reduces channel-switching. That means messaging, supplier discovery,
+                order tracking, finance, and admin oversight all need to feel connected.
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold text-white mb-3">Platform</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
-                <li><a href="#whatsapp" className="hover:text-white">WhatsApp Bot</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-3">For Suppliers</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="/register" className="hover:text-white">List Your Products</a></li>
-                <li><a href="#pricing" className="hover:text-white">Listing Plans</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-white mb-3">Contact</h4>
-              <ul className="space-y-2 text-sm">
-                <li>support@malilink.co.tz</li>
-                <li>+255 123 456 789</li>
-                <li>Kariakoo, Dar es Salaam</li>
-              </ul>
+
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {features.map((feature) => {
+                const Icon = feature.icon;
+
+                return (
+                  <div key={feature.title} className="surface-card rounded-[1.75rem] p-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="mt-5 font-[var(--font-display)] text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+                      {feature.title}
+                    </h3>
+                    <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{feature.description}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
-            &copy; 2026 MaliLink. All rights reserved.
+        </section>
+
+        <section id="workflow" className="px-5 py-14 sm:px-6">
+          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr,1.05fr]">
+            <div className="surface-card-strong rounded-[2rem] p-6 sm:p-7">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-700">Operational flow</p>
+              <h2 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.05em] text-slate-950">
+                Trade progress should be visible in one pass.
+              </h2>
+              <p className="mt-4 max-w-xl text-base leading-7 text-[color:var(--muted)]">
+                When the team can see demand, financing, and delivery status together, fewer things slip through chats,
+                notebooks, or separate spreadsheets.
+              </p>
+
+              <div className="mt-8 space-y-4">
+                {operationsPillars.map((item, index) => (
+                  <div key={item} className="flex items-start gap-4 rounded-[1.5rem] border border-black/5 bg-white/80 p-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white">
+                      {index + 1}
+                    </div>
+                    <p className="pt-1 text-sm leading-7 text-[color:var(--muted)]">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="surface-card rounded-[1.75rem] p-6">
+                <div className="flex items-center gap-3">
+                  <BadgeDollarSign className="h-5 w-5 text-emerald-700" />
+                  <div className="font-[var(--font-display)] text-xl font-semibold text-slate-950">
+                    Finance stays close to operations
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+                  Credit exposure, pending collections, and settled payments belong next to the orders that created them.
+                </p>
+              </div>
+
+              <div className="surface-card rounded-[1.75rem] p-6">
+                <div className="flex items-center gap-3">
+                  <Truck className="h-5 w-5 text-amber-700" />
+                  <div className="font-[var(--font-display)] text-xl font-semibold text-slate-950">
+                    Shipment and customs visibility
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+                  Operators need more than a final delivery status. The journey between confirmation, shipping, customs,
+                  and completion should stay legible.
+                </p>
+              </div>
+
+              <div className="surface-card rounded-[1.75rem] p-6">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-slate-900" />
+                  <div className="font-[var(--font-display)] text-xl font-semibold text-slate-950">
+                    Trusted counterparties
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+                  Supplier verification, ratings, and active listing tiers help buyers move faster without losing confidence.
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </footer>
+        </section>
+
+        <section id="pricing" className="px-5 py-14 sm:px-6">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-10 text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Pricing</p>
+              <h2 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.05em] text-slate-950">
+                Start lean, then add operational depth.
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
+                Subscription planning is shown in USD, while the product experience itself remains centered on Tanzanian shillings.
+              </p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              {pricingTiers.map((tier) => (
+                <div
+                  key={tier.name}
+                  className={`surface-card relative rounded-[1.9rem] p-6 ${
+                    tier.featured ? "border-emerald-300 bg-emerald-950 text-white" : ""
+                  }`}
+                >
+                  {tier.featured ? (
+                    <div className="mb-5 inline-flex rounded-full bg-white/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+                      Most practical for growing teams
+                    </div>
+                  ) : null}
+                  <div className={`font-[var(--font-display)] text-2xl font-semibold ${tier.featured ? "text-white" : "text-slate-950"}`}>
+                    {tier.name}
+                  </div>
+                  <p className={`mt-3 text-sm leading-7 ${tier.featured ? "text-white/78" : "text-[color:var(--muted)]"}`}>
+                    {tier.summary}
+                  </p>
+                  <div className="mt-5 flex items-end gap-1">
+                    <span className={`font-[var(--font-display)] text-5xl font-bold tracking-[-0.05em] ${tier.featured ? "text-white" : "text-slate-950"}`}>
+                      {tier.price}
+                    </span>
+                    <span className={`pb-1 text-sm ${tier.featured ? "text-white/78" : "text-[color:var(--muted)]"}`}>{tier.period}</span>
+                  </div>
+
+                  <div className="mt-6 space-y-3">
+                    {tier.features.map((feature) => (
+                      <div key={feature} className="flex items-start gap-3">
+                        <CheckCircle2 className={`mt-0.5 h-4.5 w-4.5 shrink-0 ${tier.featured ? "text-emerald-200" : "text-emerald-700"}`} />
+                        <span className={`text-sm leading-6 ${tier.featured ? "text-white/88" : "text-[color:var(--muted)]"}`}>
+                          {feature}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Link
+                    href="/register"
+                    className={`mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold ${
+                      tier.featured
+                        ? "bg-white text-slate-950 hover:bg-[#fff7ea]"
+                        : "bg-slate-950 text-white hover:bg-emerald-800"
+                    }`}
+                  >
+                    Get started
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="px-5 pb-16 pt-6 sm:px-6">
+          <div className="surface-card-strong mx-auto flex max-w-7xl flex-col gap-6 rounded-[2.25rem] px-6 py-8 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">Next step</p>
+              <h2 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.05em] text-slate-950">
+                Bring your buyers, suppliers, and payments into the same system.
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-[color:var(--muted)]">
+                MaliLink works best when the team stops treating operations as separate threads and starts running them like one coordinated pipeline.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-700 px-6 py-3.5 text-sm font-semibold text-white hover:bg-emerald-800"
+              >
+                Create account
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white px-6 py-3.5 text-sm font-semibold text-slate-900 hover:bg-[#fffaf3]"
+              >
+                Open dashboard
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

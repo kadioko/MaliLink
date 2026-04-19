@@ -1,11 +1,26 @@
 import { getServerSession } from "next-auth";
+import { Building2, Landmark, Smartphone, WalletCards } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatTzsFromUsd } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, ResponsiveTable, SectionCard, StatCard } from "@/components/dashboard-ui";
 import { MpesaPaymentPanel } from "./mpesa-payment-panel";
 
-const PAYMENT_METHODS = ["MPESA", "TIGO_PESA", "AIRTEL_MONEY", "BANK_TRANSFER", "CASH", "CREDIT"];
+const PAYMENT_METHODS = [
+  { name: "MPESA", icon: Smartphone },
+  { name: "TIGO_PESA", icon: Smartphone },
+  { name: "AIRTEL_MONEY", icon: Smartphone },
+  { name: "BANK_TRANSFER", icon: Landmark },
+  { name: "CASH", icon: WalletCards },
+  { name: "CREDIT", icon: Building2 },
+] as const;
+
+const paymentToneMap: Record<string, "warning" | "success" | "danger" | "info" | "default"> = {
+  PENDING: "warning",
+  PROCESSING: "info",
+  COMPLETED: "success",
+  FAILED: "danger",
+};
 
 export default async function PaymentsPage() {
   const session = await getServerSession(authOptions);
@@ -36,7 +51,7 @@ export default async function PaymentsPage() {
     : [];
 
   const unpaidOrders = payableOrders
-    .map((order: (typeof payableOrders)[number]) => {
+    .map((order) => {
       const paidTzs = order.payments.reduce((sum: number, payment: { amountTzs: number }) => sum + payment.amountTzs, 0);
       return {
         id: order.id,
@@ -87,7 +102,7 @@ export default async function PaymentsPage() {
         </SectionCard>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard label="Total Paid" value={formatTzsFromUsd(totalPaid)} tone="success" delta="Successfully settled" />
@@ -98,28 +113,30 @@ export default async function PaymentsPage() {
           <SectionCard title="Payment History" description="Recent payment records including gateway references and final receipts.">
             {payments.length ? (
               <ResponsiveTable>
-              <table className="min-w-[760px] w-full">
-                <thead>
-                  <tr className="border-b bg-gray-50/50">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Method</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Amount</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Reference</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map((payment: (typeof payments)[number]) => (
-                    <tr key={payment.id} className="border-b last:border-b-0 hover:bg-gray-50/70">
-                      <td className="py-3 px-4 text-sm text-gray-600">{new Date(payment.createdAt).toLocaleDateString()}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{payment.method}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{formatTzsFromUsd(payment.amountUsd)}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600"><Badge tone={payment.status === "COMPLETED" ? "success" : payment.status === "FAILED" ? "danger" : "warning"}>{payment.status}</Badge></td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{payment.mpesaReceiptNo ?? payment.transactionRef ?? "—"}</td>
+                <table className="min-w-[760px] w-full">
+                  <thead>
+                    <tr className="border-b bg-gray-50/50">
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Date</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Method</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Amount</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Reference</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {payments.map((payment) => (
+                      <tr key={payment.id} className="border-b last:border-b-0 hover:bg-gray-50/70">
+                        <td className="px-4 py-3 text-sm text-gray-600">{new Date(payment.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{payment.method}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{formatTzsFromUsd(payment.amountUsd)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          <Badge tone={paymentToneMap[payment.status] ?? "default"}>{payment.status}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{payment.mpesaReceiptNo ?? payment.transactionRef ?? "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </ResponsiveTable>
             ) : (
               <EmptyState icon="💳" title="No payments recorded yet" description="Payment history will appear here once orders begin settling." />
@@ -129,17 +146,26 @@ export default async function PaymentsPage() {
 
         <SectionCard title="Payment Methods" description="Available collection channels configured for the current marketplace setup.">
           <div className="space-y-3">
-            {PAYMENT_METHODS.map((method) => (
-              <div
-                key={method}
-                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-gray-200"
-              >
-                <span className="font-medium text-gray-700">{method}</span>
-                <Badge tone="success">Available</Badge>
-              </div>
-            ))}
+            {PAYMENT_METHODS.map((method) => {
+              const Icon = method.icon;
+
+              return (
+                <div
+                  key={method.name}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3"
+                >
+                  <span className="inline-flex items-center gap-3 font-medium text-gray-700">
+                    <span className="rounded-2xl bg-emerald-50 p-2 text-emerald-700">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    {method.name}
+                  </span>
+                  <Badge tone="success">Available</Badge>
+                </div>
+              );
+            })}
           </div>
-          <p className="text-xs text-gray-400 mt-4">
+          <p className="mt-4 text-xs text-gray-400">
             1.5% transaction fee applies. Mobile money and gateway integrations still require production credentials.
           </p>
         </SectionCard>

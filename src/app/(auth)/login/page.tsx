@@ -37,7 +37,7 @@ function LoginPageContent() {
         : new URLSearchParams(window.location.search).get("callbackUrl") ?? "/dashboard";
 
     const result = await signIn("credentials", {
-      email,
+      email: email.trim().toLowerCase(),
       password,
       redirect: false,
       callbackUrl,
@@ -79,7 +79,8 @@ function LoginPageContent() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              placeholder="supplier@malilink.test"
+              placeholder="you@business.com"
+              autoComplete="email"
               required
             />
           </div>
@@ -95,6 +96,7 @@ function LoginPageContent() {
               onChange={(event) => setPassword(event.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               placeholder="Enter your password"
+              autoComplete="current-password"
               required
             />
             <div className="mt-2 text-right">
@@ -118,10 +120,6 @@ function LoginPageContent() {
             {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
-
-        <div className="mt-4 rounded-lg bg-emerald-50 border border-emerald-100 px-4 py-3 text-sm text-emerald-800">
-          Test login: <span className="font-medium">supplier@malilink.test</span> / <span className="font-medium">TestPassword123!</span>
-        </div>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">

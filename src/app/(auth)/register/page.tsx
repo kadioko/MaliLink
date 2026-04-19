@@ -71,7 +71,7 @@ export default function RegisterPage() {
     }
 
     const signInResult = await signIn("credentials", {
-      email: form.email,
+      email: form.email.trim().toLowerCase(),
       password: form.password,
       redirect: false,
       callbackUrl: "/dashboard",
@@ -108,6 +108,7 @@ export default function RegisterPage() {
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                 placeholder="Fatma Hassan"
+                autoComplete="name"
                 required
               />
             </div>
@@ -120,6 +121,7 @@ export default function RegisterPage() {
                 onChange={(event) => setForm((current) => ({ ...current, businessName: event.target.value }))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                 placeholder="Hassan Imports Ltd"
+                autoComplete="organization"
                 required
               />
             </div>
@@ -162,6 +164,7 @@ export default function RegisterPage() {
               onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               placeholder="+255 7XX XXX XXX"
+              autoComplete="tel"
               required
             />
           </div>
@@ -175,6 +178,7 @@ export default function RegisterPage() {
               onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               placeholder="fatma@example.com"
+              autoComplete="email"
               required
             />
           </div>
@@ -188,6 +192,7 @@ export default function RegisterPage() {
               onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
               placeholder="Create a strong password"
+              autoComplete="new-password"
               required
             />
           </div>

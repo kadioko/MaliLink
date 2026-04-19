@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { startTransition, useMemo, useState } from "react";
+import { CheckCircle2, ImageIcon, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { formatTzs } from "@/lib/utils";
+import { formatTzs, getInitials } from "@/lib/utils";
 
 type ManagedProduct = {
   id: string;
@@ -49,6 +51,7 @@ type ProductManagementPanelProps = {
 };
 
 export function ProductManagementPanel({ initialProducts, exchangeRate }: ProductManagementPanelProps) {
+  const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductFormState>(defaultFormState);
@@ -59,7 +62,7 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
 
   const editingProduct = useMemo(
     () => products.find((product) => product.id === editingId) ?? null,
-    [editingId, products]
+    [editingId, products],
   );
 
   const resetForm = () => {
@@ -149,6 +152,9 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
       });
       setSuccess(editingId ? "Product updated successfully." : "Product created successfully.");
       resetForm();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Failed to save product.");
     } finally {
@@ -173,6 +179,9 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
         resetForm();
       }
       setSuccess("Product deleted successfully.");
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : "Failed to delete product.");
     } finally {
@@ -182,11 +191,15 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.9fr,1.1fr]">
-      <form onSubmit={submitProduct} className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+      <form onSubmit={submitProduct} className="surface-card rounded-[1.85rem] p-5 sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{editingId ? "Edit Product" : "Add Product"}</h2>
-            <p className="mt-1 text-sm text-gray-500">Manage supplier inventory in TZS and keep catalog data current.</p>
+            <h2 className="font-[var(--font-display)] text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+              {editingId ? "Edit Product" : "Add Product"}
+            </h2>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">
+              Manage supplier inventory in TZS and keep catalog data current.
+            </p>
           </div>
           {editingId ? (
             <button
@@ -267,18 +280,26 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
         </div>
 
         {error ? <div className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
-        {success ? <div className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
+        {success ? (
+          <div className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            {success}
+          </div>
+        ) : null}
 
         <button type="submit" disabled={submitting} className="mt-5 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300">
           {submitting ? "Saving product..." : editingId ? "Update Product" : "Create Product"}
         </button>
       </form>
 
-      <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+      <div className="surface-card rounded-[1.85rem] p-5 sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Your Catalog</h2>
-            <p className="mt-1 text-sm text-gray-500">Review inventory, update prices in TZS, and keep listings accurate.</p>
+            <h2 className="font-[var(--font-display)] text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+              Your Catalog
+            </h2>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">
+              Review inventory, update prices in TZS, and keep listings accurate.
+            </p>
           </div>
           <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">{products.length} products</div>
         </div>
@@ -286,26 +307,49 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
         <div className="mt-5 space-y-3">
           {products.length ? (
             products.map((product) => (
-              <div key={product.id} className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div key={product.id} className="overflow-hidden rounded-[1.5rem] border border-gray-200 bg-white">
+                <div className="grid gap-4 p-4 md:grid-cols-[120px,1fr,auto]">
+                  <div className="aspect-square overflow-hidden rounded-[1.25rem] bg-gradient-to-br from-emerald-100 to-amber-100">
+                    {product.imageUrls[0] ? (
+                      <img src={product.imageUrls[0]} alt={product.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-500">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-950 text-base font-semibold text-white">
+                          {getInitials(product.name)}
+                        </div>
+                        <div className="inline-flex items-center gap-1 text-xs font-medium">
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          Needs image
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{product.category}</div>
-                    <h3 className="mt-1 font-semibold text-gray-900">{product.name}</h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{product.category}</div>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${product.inStock ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                        {product.inStock ? <CheckCircle2 className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />}
+                        {product.inStock ? "Ready to sell" : "Out of stock"}
+                      </span>
+                    </div>
+                    <h3 className="mt-2 font-semibold text-gray-900">{product.name}</h3>
                     {product.nameSwahili ? <div className="mt-1 text-sm text-gray-500">{product.nameSwahili}</div> : null}
-                    <div className="mt-1 text-sm text-gray-500">{formatTzs(product.priceTzs)} / {product.unit}</div>
-                    <div className="mt-1 text-xs text-gray-500">MOQ {product.moq} • {product.inStock ? "In stock" : "Out of stock"}</div>
+                    <div className="mt-2 text-sm text-gray-500">{formatTzs(product.priceTzs)} / {product.unit}</div>
+                    <div className="mt-1 text-xs text-gray-500">MOQ {product.moq} • added {new Date(product.createdAt).toLocaleDateString()}</div>
                     {product.description ? <div className="mt-3 max-w-xl text-sm text-gray-600">{product.description}</div> : null}
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => populateForm(product)} className="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                  <div className="flex flex-wrap gap-2 md:flex-col">
+                    <button type="button" onClick={() => populateForm(product)} className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                      <Pencil className="h-4 w-4" />
                       Edit
                     </button>
                     <button
                       type="button"
                       onClick={() => removeProduct(product.id)}
                       disabled={deletingId === product.id}
-                      className="rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
                     >
+                      <Trash2 className="h-4 w-4" />
                       {deletingId === product.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
