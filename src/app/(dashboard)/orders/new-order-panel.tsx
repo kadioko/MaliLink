@@ -26,9 +26,21 @@ type SupplierOption = {
 
 type NewOrderPanelProps = {
   suppliers: SupplierOption[];
+  importerBusinessName: string;
+  onOptimisticOrderCreated?: (order: {
+    id: string;
+    orderNumber: string;
+    totalUsd: number;
+    status: string;
+    source: string;
+    createdAt: string;
+    items: Array<{ productId: string; quantity: number; product: ProductOption }>;
+    supplier: { businessName: string };
+    importer: { businessName: string };
+  }) => void;
 };
 
-export function NewOrderPanel({ suppliers }: NewOrderPanelProps) {
+export function NewOrderPanel({ suppliers, importerBusinessName, onOptimisticOrderCreated }: NewOrderPanelProps) {
   const router = useRouter();
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>(suppliers[0]?.id ?? "");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -105,7 +117,18 @@ export function NewOrderPanel({ suppliers }: NewOrderPanelProps) {
         }),
       });
 
-      const data = (await response.json()) as { error?: string | { message?: string }[]; order?: { orderNumber: string } };
+      const data = (await response.json()) as {
+        error?: string | { message?: string }[];
+        order?: {
+          id: string;
+          orderNumber: string;
+          totalUsd: number;
+          status: string;
+          source: string;
+          createdAt: string;
+          supplier: { businessName: string };
+        };
+      };
 
       if (!response.ok) {
         const message = Array.isArray(data.error)
@@ -115,6 +138,19 @@ export function NewOrderPanel({ suppliers }: NewOrderPanelProps) {
       }
 
       setSuccess(`Order ${data.order?.orderNumber ?? "created"} submitted successfully.`);
+      if (data.order && onOptimisticOrderCreated) {
+        onOptimisticOrderCreated({
+          id: data.order.id,
+          orderNumber: data.order.orderNumber,
+          totalUsd: data.order.totalUsd,
+          status: data.order.status,
+          source: data.order.source,
+          createdAt: data.order.createdAt,
+          items: selectedItems,
+          supplier: { businessName: data.order.supplier.businessName },
+          importer: { businessName: importerBusinessName },
+        });
+      }
       setQuantities({});
       setNotes("");
       startTransition(() => {

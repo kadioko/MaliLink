@@ -17,6 +17,22 @@ type PayableOrder = {
 
 type MpesaPaymentPanelProps = {
   orders: PayableOrder[];
+  onOptimisticPaymentStarted?: (payment: {
+    id: string;
+    orderId: string;
+    amountUsd: number;
+    amountTzs: number;
+    platformFeeUsd: number;
+    status: string;
+    method: string;
+    transactionRef: string | null;
+    mpesaReceiptNo: string | null;
+    createdAt: string;
+  }) => void;
+  onOptimisticPaymentCompleted?: (
+    paymentId: string,
+    updates: { status: string; transactionRef: string | null; mpesaReceiptNo: string | null },
+  ) => void;
 };
 
 type PaymentStatusResponse = {
@@ -37,7 +53,11 @@ const paymentToneMap: Record<string, "warning" | "success" | "danger" | "info" |
   FAILED: "danger",
 };
 
-export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
+export function MpesaPaymentPanel({
+  orders,
+  onOptimisticPaymentStarted,
+  onOptimisticPaymentCompleted,
+}: MpesaPaymentPanelProps) {
   const router = useRouter();
   const [selectedOrderId, setSelectedOrderId] = useState(orders[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +98,11 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
 
         if (data.payment.status === "COMPLETED") {
           setSuccess("Payment completed successfully. Your receipt/reference is available below.");
+          onOptimisticPaymentCompleted?.(data.payment.id, {
+            status: data.payment.status,
+            transactionRef: data.payment.transactionRef,
+            mpesaReceiptNo: data.payment.mpesaReceiptNo,
+          });
           startTransition(() => {
             router.refresh();
           });
@@ -152,6 +177,18 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
         checkoutUrl?: string;
         reference?: string;
         shortCode?: string;
+        payment?: {
+          id: string;
+          orderId: string;
+          amountUsd: number;
+          amountTzs: number;
+          platformFeeUsd: number;
+          status: string;
+          method: string;
+          transactionRef: string | null;
+          mpesaReceiptNo: string | null;
+          createdAt: string;
+        };
       };
 
       if (!response.ok) {
@@ -166,6 +203,9 @@ export function MpesaPaymentPanel({ orders }: MpesaPaymentPanelProps) {
       setPaymentStatus(data.paymentStatus ?? "PENDING");
       setTransactionRef(data.reference ?? null);
       setCheckoutUrl(data.checkoutUrl ?? null);
+      if (data.payment) {
+        onOptimisticPaymentStarted?.(data.payment);
+      }
       startTransition(() => {
         router.refresh();
       });

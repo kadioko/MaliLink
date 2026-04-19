@@ -18,7 +18,7 @@ type ManagedProduct = {
   moq: number;
   inStock: boolean;
   imageUrls: string[];
-  createdAt: Date;
+  createdAt: Date | string;
 };
 
 type ProductFormState = {
@@ -48,9 +48,18 @@ const defaultFormState: ProductFormState = {
 type ProductManagementPanelProps = {
   initialProducts: ManagedProduct[];
   exchangeRate: number;
+  onOptimisticProductCreated?: (product: ManagedProduct) => void;
+  onOptimisticProductUpdated?: (product: ManagedProduct) => void;
+  onOptimisticProductDeleted?: (productId: string) => void;
 };
 
-export function ProductManagementPanel({ initialProducts, exchangeRate }: ProductManagementPanelProps) {
+export function ProductManagementPanel({
+  initialProducts,
+  exchangeRate,
+  onOptimisticProductCreated,
+  onOptimisticProductUpdated,
+  onOptimisticProductDeleted,
+}: ProductManagementPanelProps) {
   const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -150,6 +159,11 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
           : [data.product!, ...current];
         return next;
       });
+      if (editingId) {
+        onOptimisticProductUpdated?.(data.product);
+      } else {
+        onOptimisticProductCreated?.(data.product);
+      }
       setSuccess(editingId ? "Product updated successfully." : "Product created successfully.");
       resetForm();
       startTransition(() => {
@@ -178,6 +192,7 @@ export function ProductManagementPanel({ initialProducts, exchangeRate }: Produc
       if (editingId === productId) {
         resetForm();
       }
+      onOptimisticProductDeleted?.(productId);
       setSuccess("Product deleted successfully.");
       startTransition(() => {
         router.refresh();
