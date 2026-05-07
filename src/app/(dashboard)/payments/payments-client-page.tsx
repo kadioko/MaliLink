@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, Landmark, Smartphone, WalletCards } from "lucide-react";
+import { Building2, Download, Landmark, Smartphone, WalletCards } from "lucide-react";
+import { exportToCsv } from "@/lib/csv";
 import { formatTzsFromUsd } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, ResponsiveTable, SectionCard, StatCard } from "@/components/dashboard-ui";
 import { MpesaPaymentPanel } from "./mpesa-payment-panel";
@@ -124,7 +125,25 @@ export function PaymentsClientPage({ role, initialPayments, initialUnpaidOrders 
             <StatCard label="Platform Fees" value={formatTzsFromUsd(platformFees)} tone="default" delta="1.5% transaction fee" />
           </div>
 
-          <SectionCard title="Payment History" description="Recent payment records including gateway references and final receipts.">
+          <SectionCard
+            title="Payment History"
+            description="Recent payment records including gateway references and final receipts."
+            action={
+              <button
+                onClick={() => exportToCsv("payments", payments.map((p) => ({
+                  Date: new Date(p.createdAt).toLocaleDateString(),
+                  Method: p.method,
+                  "Amount (TZS)": p.amountTzs,
+                  Status: p.status,
+                  Reference: p.mpesaReceiptNo ?? p.transactionRef ?? "",
+                })))}
+                className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Export CSV
+              </button>
+            }
+          >
             {payments.length ? (
               <ResponsiveTable>
                 <table className="min-w-[760px] w-full">

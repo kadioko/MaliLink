@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { UserRole } from "@prisma/client";
-import { ShieldCheck } from "lucide-react";
+import { Settings, ShieldCheck } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { Badge } from "@/components/dashboard-ui";
+import { ExchangeRateWidget } from "@/components/exchange-rate-widget";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { SessionMonitor } from "@/components/session-monitor";
 import { getInitials } from "@/lib/utils";
 import { DesktopDashboardNav } from "./desktop-dashboard-nav";
@@ -14,7 +16,7 @@ import { SignOutButton } from "./sign-out-button";
 type NavItem = {
   href: string;
   label: string;
-  icon: "dashboard" | "orders" | "suppliers" | "payments" | "credit" | "products";
+  icon: "dashboard" | "orders" | "suppliers" | "payments" | "credit" | "products" | "settings" | "supplier-profile" | "admin-users";
 };
 
 const dashboardNavItems: Record<UserRole, NavItem[]> = {
@@ -24,6 +26,7 @@ const dashboardNavItems: Record<UserRole, NavItem[]> = {
     { href: "/suppliers", label: "Suppliers", icon: "suppliers" },
     { href: "/payments", label: "Payments", icon: "payments" },
     { href: "/credit", label: "Credit", icon: "credit" },
+    { href: "/settings", label: "Settings", icon: "settings" },
   ],
   SUPPLIER: [
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -31,6 +34,8 @@ const dashboardNavItems: Record<UserRole, NavItem[]> = {
     { href: "/orders", label: "Orders", icon: "orders" },
     { href: "/payments", label: "Payments", icon: "payments" },
     { href: "/credit", label: "Credit", icon: "credit" },
+    { href: "/supplier-profile", label: "My Profile", icon: "supplier-profile" },
+    { href: "/settings", label: "Settings", icon: "settings" },
   ],
   ADMIN: [
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -39,6 +44,8 @@ const dashboardNavItems: Record<UserRole, NavItem[]> = {
     { href: "/suppliers", label: "Suppliers", icon: "suppliers" },
     { href: "/payments", label: "Payments", icon: "payments" },
     { href: "/credit", label: "Credit", icon: "credit" },
+    { href: "/settings", label: "Settings", icon: "settings" },
+    { href: "/admin/users", label: "Users", icon: "admin-users" },
   ],
 };
 
@@ -62,6 +69,12 @@ export default async function DashboardLayout({
       <aside className="hidden w-80 px-4 py-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <div className="surface-card-strong flex h-full flex-col overflow-hidden rounded-[2rem]">
           <div className="border-b border-black/5 px-6 pb-5 pt-6">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <NotificationsBell />
+              <Link href="/settings" className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition hover:bg-gray-50" title="Settings">
+                <Settings className="h-4 w-4" />
+              </Link>
+            </div>
             <Link href="/dashboard" className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-sm font-bold text-white shadow-sm">
                 ML
@@ -99,16 +112,12 @@ export default async function DashboardLayout({
           </div>
           <DesktopDashboardNav items={navItems} />
 
-          <div className="mt-auto border-t border-black/5 px-6 py-5">
-            <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50/80 px-4 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">WhatsApp Layer</p>
-              <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
-                Orders from chat still flow into your core trade workflow with shared visibility across teams.
-              </p>
-            </div>
-            <div className="mt-4">
-              <SignOutButton />
-            </div>
+          <div className="mt-auto border-t border-black/5 px-6 py-5 space-y-3">
+            <ExchangeRateWidget
+              defaultRate={Number(process.env.USD_TO_TZS_RATE ?? 2500)}
+              isAdmin={session.user.role === "ADMIN"}
+            />
+            <SignOutButton />
           </div>
         </div>
       </aside>

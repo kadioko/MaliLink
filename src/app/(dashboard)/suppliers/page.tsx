@@ -1,6 +1,6 @@
-import { Building2, MapPin, ShieldCheck, Star } from "lucide-react";
 import { db } from "@/lib/db";
-import { Badge, EmptyState, PageHeader, SectionCard, TabsRow } from "@/components/dashboard-ui";
+import { Badge, PageHeader, SectionCard, TabsRow } from "@/components/dashboard-ui";
+import { SuppliersClient } from "./suppliers-client";
 
 const LISTING_TIERS = [
   { tier: "FREE", label: "Free", tone: "default" as const },
@@ -64,75 +64,8 @@ export default async function SuppliersPage({
             : `Showing ${activeTier.toLowerCase()} supplier listings only.`
         }
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visibleSuppliers.length ? (
-            visibleSuppliers.map((listing) => {
-              const listingTone = LISTING_TIERS.find((tier) => tier.tier === listing.tier)?.tone ?? "default";
-
-              return (
-                <div key={listing.id} className="surface-card rounded-[1.6rem] p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <Badge tone={listingTone}>{listing.tier}</Badge>
-                      <h2 className="mt-4 font-[var(--font-display)] text-2xl font-semibold tracking-[-0.04em] text-slate-950">
-                        {listing.supplier.businessName}
-                      </h2>
-                      <p className="mt-1 text-sm text-[color:var(--muted)]">{listing.supplier.name}</p>
-                    </div>
-                    <div className="rounded-full border border-emerald-200 bg-emerald-50 p-2 text-emerald-700">
-                      <ShieldCheck className="h-4 w-4" />
-                    </div>
-                  </div>
-
-                  <p className="mt-4 min-h-[72px] text-sm leading-7 text-[color:var(--muted)]">
-                    {listing.description ?? "Verified supplier listing on MaliLink with marketplace visibility and active trade readiness."}
-                  </p>
-
-                  <div className="mt-5 grid gap-3">
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/80 px-4 py-3">
-                      <MapPin className="h-4 w-4 text-amber-700" />
-                      <span className="text-sm text-slate-900">
-                        {listing.supplier.location ?? "Location not provided"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/80 px-4 py-3">
-                      <Building2 className="h-4 w-4 text-emerald-700" />
-                      <span className="text-sm text-slate-900">
-                        {listing.supplier._count.products} products listed
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/80 px-4 py-3">
-                      <Star className="h-4 w-4 text-amber-500" />
-                      <span className="text-sm text-slate-900">
-                        {listing.rating.toFixed(1)} rating from {listing.reviewCount} reviews
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap items-center gap-2">
-                    <Badge tone={listing.supplier.kycStatus === "VERIFIED" ? "success" : "warning"}>
-                      {listing.supplier.kycStatus}
-                    </Badge>
-                    <Badge tone="default">
-                      {listing.minOrder ? `Min order $${listing.minOrder}` : "Min order on request"}
-                    </Badge>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="col-span-full">
-              <EmptyState
-                icon="🏭"
-                title={activeTier === "ALL" ? "No suppliers listed yet" : `No ${activeTier.toLowerCase()} suppliers`}
-                description={
-                  activeTier === "ALL"
-                    ? "Supplier listings will appear here once accounts publish active marketplace profiles."
-                    : "Try another tier to inspect more marketplace listings."
-                }
-              />
-            </div>
-          )}
+        <div className="space-y-5">
+          <SuppliersClient listings={visibleSuppliers} />
         </div>
       </SectionCard>
     </div>

@@ -89,165 +89,118 @@ export default function RegisterPage() {
     router.refresh();
   }
 
+  const inputCls = "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-amber-50 py-12 px-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-emerald-800">Join MaliLink</h1>
-          <p className="text-gray-500 mt-2">Register your business in minutes</p>
-        </div>
-
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                placeholder="Fatma Hassan"
-                autoComplete="name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
-              <input
-                type="text"
-                name="businessName"
-                value={form.businessName}
-                onChange={(event) => setForm((current) => ({ ...current, businessName: event.target.value }))}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                placeholder="Hassan Imports Ltd"
-                autoComplete="organization"
-                required
-              />
-            </div>
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="w-full max-w-lg space-y-6">
+        <div className="text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-lg font-bold text-white shadow-lg">
+            ML
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">I am a...</label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-emerald-500 transition">
-                <input
-                  type="radio"
-                  name="role"
-                  value="IMPORTER"
-                  checked={form.role === "IMPORTER"}
-                  onChange={() => setForm((current) => ({ ...current, role: "IMPORTER" }))}
-                  className="mr-2"
-                />
-                <span className="font-medium">Importer / Buyer</span>
-              </label>
-              <label className="flex items-center justify-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-emerald-500 transition">
-                <input
-                  type="radio"
-                  name="role"
-                  value="SUPPLIER"
-                  checked={form.role === "SUPPLIER"}
-                  onChange={() => setForm((current) => ({ ...current, role: "SUPPLIER" }))}
-                  className="mr-2"
-                />
-                <span className="font-medium">Supplier</span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone (WhatsApp)</label>
-            <input
-              type="tel"
-              name="phone"
-              value={form.phone}
-              onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-              placeholder="+255 7XX XXX XXX"
-              autoComplete="tel"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-              placeholder="fatma@example.com"
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-              placeholder="Create a strong password"
-              autoComplete="new-password"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Location
-            </label>
-            <input
-              type="text"
-              name="location"
-              value={form.location}
-              onChange={(event) => setForm((current) => ({ ...current, location: event.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-              placeholder="Kariakoo, Dar es Salaam"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              TIN Number (optional)
-            </label>
-            <input
-              type="text"
-              name="tinNumber"
-              value={form.tinNumber}
-              onChange={(event) => setForm((current) => ({ ...current, tinNumber: event.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-              placeholder="TIN number for verified status"
-            />
-          </div>
-
-          {error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
-            Already have an account?{" "}
-            <Link href="/login" className="text-emerald-600 font-medium hover:underline">
-              Sign in
-            </Link>
+          <h1 className="font-[var(--font-display)] text-3xl font-bold tracking-[-0.04em] text-slate-950">
+            Join MaliLink
+          </h1>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            Register your business and start trading in minutes
           </p>
         </div>
+
+        <div className="surface-card-strong overflow-hidden rounded-[2rem] p-8 shadow-[var(--shadow-lg)]">
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div>
+              <p className="mb-3 text-sm font-semibold text-gray-700">I am a…</p>
+              <div className="grid grid-cols-2 gap-3">
+                {(["IMPORTER", "SUPPLIER"] as const).map((r) => (
+                  <label
+                    key={r}
+                    className={`flex cursor-pointer flex-col gap-1 rounded-2xl border-2 p-4 transition ${
+                      form.role === r
+                        ? "border-emerald-500 bg-emerald-50"
+                        : "border-gray-200 bg-white hover:border-emerald-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="role"
+                      value={r}
+                      checked={form.role === r}
+                      onChange={() => setForm((c) => ({ ...c, role: r }))}
+                      className="sr-only"
+                    />
+                    <span className="text-xl">{r === "IMPORTER" ? "🛒" : "🏭"}</span>
+                    <span className={`text-sm font-semibold ${form.role === r ? "text-emerald-800" : "text-gray-700"}`}>
+                      {r === "IMPORTER" ? "Importer / Buyer" : "Supplier"}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {r === "IMPORTER" ? "Source & order goods" : "List & sell products"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" name="name" value={form.name} onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))} className={inputCls} placeholder="Fatma Hassan" autoComplete="name" required />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Business Name</label>
+                <input type="text" name="businessName" value={form.businessName} onChange={(e) => setForm((c) => ({ ...c, businessName: e.target.value }))} className={inputCls} placeholder="Hassan Imports Ltd" autoComplete="organization" required />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Phone (WhatsApp)</label>
+                <input type="tel" name="phone" value={form.phone} onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))} className={inputCls} placeholder="+255 7XX XXX XXX" autoComplete="tel" required />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email" value={form.email} onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))} className={inputCls} placeholder="fatma@example.com" autoComplete="email" required />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Password</label>
+              <input type="password" name="password" value={form.password} onChange={(e) => setForm((c) => ({ ...c, password: e.target.value }))} className={inputCls} placeholder="Min. 8 characters" autoComplete="new-password" required minLength={8} />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">Location <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input type="text" name="location" value={form.location} onChange={(e) => setForm((c) => ({ ...c, location: e.target.value }))} className={inputCls} placeholder="Kariakoo, Dar es Salaam" autoComplete="address-level2" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">TIN Number <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input type="text" name="tinNumber" value={form.tinNumber} onChange={(e) => setForm((c) => ({ ...c, tinNumber: e.target.value }))} className={inputCls} placeholder="For verified status" autoComplete="off" />
+              </div>
+            </div>
+
+            {error ? (
+              <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <span className="mt-0.5 shrink-0">⚠️</span>
+                {error}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Creating account…" : "Create Account →"}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-sm text-[color:var(--muted)]">
+          Already have an account?{" "}
+          <Link href="/login" className="font-semibold text-emerald-700 hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );

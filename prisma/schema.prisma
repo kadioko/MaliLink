@@ -37,6 +37,7 @@ model User {
   location      String?   // e.g. "Kariakoo, Dar es Salaam"
   whatsappId    String?   @unique // WhatsApp phone for bot
   avatarUrl     String?
+  isSuspended   Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

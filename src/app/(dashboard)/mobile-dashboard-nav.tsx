@@ -9,19 +9,23 @@ import {
   LayoutDashboard,
   Menu,
   Package,
+  Settings,
   ShieldCheck,
+  Store,
   Truck,
+  Users,
   Wallet,
   X,
 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import { NotificationsBell } from "@/components/notifications-bell";
 import { SignOutButton } from "./sign-out-button";
 
 type MobileDashboardNavProps = {
   items: Array<{
     href: string;
     label: string;
-    icon: "dashboard" | "orders" | "suppliers" | "payments" | "credit" | "products";
+    icon: "dashboard" | "orders" | "suppliers" | "payments" | "credit" | "products" | "settings" | "supplier-profile" | "admin-users";
   }>;
   businessName: string;
   role: string;
@@ -34,6 +38,9 @@ const iconMap = {
   payments: CreditCard,
   credit: Wallet,
   products: Package,
+  settings: Settings,
+  "supplier-profile": Store,
+  "admin-users": Users,
 } as const;
 
 export function MobileDashboardNav({ items, businessName, role }: MobileDashboardNavProps) {
@@ -55,14 +62,17 @@ export function MobileDashboardNav({ items, businessName, role }: MobileDashboar
               <div className="truncate text-xs text-[color:var(--muted)]">{businessName}</div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpen((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm"
-          >
-            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            {open ? "Close" : "Menu"}
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationsBell />
+            <button
+              type="button"
+              onClick={() => setOpen((current) => !current)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm"
+            >
+              {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              {open ? "Close" : "Menu"}
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Boxes, ImageIcon, MapPin, PackageOpen } from "lucide-react";
+import { Boxes, ImageIcon, MapPin, PackageOpen, Search, X } from "lucide-react";
 import { formatTzsFromUsd, getInitials } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, TabsRow } from "@/components/dashboard-ui";
 import { ProductManagementPanel } from "./product-management-panel";
@@ -43,6 +43,7 @@ export function ProductsClientPage({
 }: ProductsClientPageProps) {
   const [products, setProducts] = useState(initialProducts);
   const [supplierProducts, setSupplierProducts] = useState(initialSupplierProducts);
+  const [search, setSearch] = useState("");
 
   const categories = useMemo(() => ["All", ...Array.from(new Set(products.map((product) => product.category)))], [products]);
   const categoryTabs = categories.map((category) => ({
@@ -51,9 +52,19 @@ export function ProductsClientPage({
     href: category === "All" ? "/products" : `/products?category=${encodeURIComponent(category)}`,
   }));
 
-  const visibleProducts = activeCategory === "All"
-    ? products
-    : products.filter((product) => product.category === activeCategory);
+  const visibleProducts = useMemo(() => {
+    const byCategory = activeCategory === "All" ? products : products.filter((p) => p.category === activeCategory);
+    if (!search.trim()) return byCategory;
+    const q = search.toLowerCase();
+    return byCategory.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.nameSwahili?.toLowerCase().includes(q) ?? false) ||
+        (p.description?.toLowerCase().includes(q) ?? false) ||
+        p.category.toLowerCase().includes(q) ||
+        (p.supplier?.businessName.toLowerCase().includes(q) ?? false),
+    );
+  }, [products, activeCategory, search]);
   const inStockCount = visibleProducts.filter((product) => product.inStock).length;
   const withImagesCount = visibleProducts.filter((product) => Boolean(product.imageUrls[0])).length;
 
@@ -126,6 +137,22 @@ export function ProductsClientPage({
           }}
         />
       ) : null}
+
+      <div className="relative max-w-md">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search products, categories, suppliers…"
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm text-gray-900 placeholder-gray-400 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+        />
+        {search ? (
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
 
       <TabsRow tabs={categoryTabs} />
 

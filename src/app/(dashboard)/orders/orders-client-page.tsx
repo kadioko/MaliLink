@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Boxes, Clock3, PackageCheck, Truck } from "lucide-react";
+import { ArrowUpRight, Boxes, Clock3, Download, PackageCheck, Truck } from "lucide-react";
+import { exportToCsv } from "@/lib/csv";
 import { formatTzsFromUsd } from "@/lib/utils";
 import { Badge, EmptyState, PageHeader, ResponsiveTable, SectionCard, TabsRow } from "@/components/dashboard-ui";
 import { NewOrderPanel } from "./new-order-panel";
@@ -81,6 +82,18 @@ export function OrdersClientPage({
 
   const totalVisibleValue = filteredOrders.reduce((sum, order) => sum + order.totalUsd, 0);
   const activeVisibleOrders = filteredOrders.filter((order) => !["COMPLETED", "CANCELLED"].includes(order.status)).length;
+
+  function handleExportCsv() {
+    exportToCsv("orders", filteredOrders.map((o) => ({
+      "Order #": o.orderNumber,
+      Counterparty: role === "SUPPLIER" ? o.importer.businessName : o.supplier.businessName,
+      Items: o.items.length,
+      "Total (TZS)": Math.round(o.totalUsd * 2600),
+      Status: o.status,
+      Source: o.source,
+      Date: new Date(o.createdAt).toLocaleDateString(),
+    })));
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
@@ -193,6 +206,15 @@ export function OrdersClientPage({
             ? "Recent order activity with source, counterparty, item count, and status."
             : `Showing ${statusFilter.toLowerCase().replaceAll("_", " ")} orders only.`
         }
+        action={
+          <button
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export CSV
+          </button>
+        }
       >
         <ResponsiveTable>
           <table className="min-w-[860px] w-full">
@@ -211,7 +233,11 @@ export function OrdersClientPage({
               {filteredOrders.length ? (
                 filteredOrders.map((order) => (
                   <tr key={order.id} className={`border-b last:border-b-0 hover:bg-gray-50/70 ${order.optimisticState === "pending" ? "bg-amber-50/50 opacity-80" : ""} ${order.optimisticState === "failed" ? "bg-rose-50/70" : ""}`}>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{order.orderNumber}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                      <Link href={`/orders/${order.id}`} className="text-emerald-700 hover:underline">
+                        {order.orderNumber}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       <div>{role === "SUPPLIER" ? order.importer.businessName : order.supplier.businessName}</div>
                       {order.optimisticMessage ? <div className="mt-1 text-xs text-rose-600">{order.optimisticMessage}</div> : null}

@@ -7,7 +7,10 @@ import {
   CreditCard,
   LayoutDashboard,
   Package,
+  Settings,
+  Store,
   Truck,
+  Users,
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,7 +19,7 @@ type DesktopDashboardNavProps = {
   items: Array<{
     href: string;
     label: string;
-    icon: "dashboard" | "orders" | "suppliers" | "payments" | "credit" | "products";
+    icon: "dashboard" | "orders" | "suppliers" | "payments" | "credit" | "products" | "settings" | "supplier-profile" | "admin-users";
   }>;
 };
 
@@ -27,6 +30,9 @@ const iconMap = {
   payments: CreditCard,
   credit: Wallet,
   products: Package,
+  settings: Settings,
+  "supplier-profile": Store,
+  "admin-users": Users,
 } as const;
 
 export function DesktopDashboardNav({ items }: DesktopDashboardNavProps) {

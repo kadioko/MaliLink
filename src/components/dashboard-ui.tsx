@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type PageHeaderProps = {
@@ -148,14 +149,34 @@ type EmptyStateProps = {
   icon: string;
   title: string;
   description: string;
+  action?: ReactNode;
 };
 
-export function EmptyState({ icon, title, description }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
     <div className="rounded-[1.5rem] border border-dashed border-[color:var(--border)] bg-white/55 px-6 py-12 text-center">
       <div className="mb-4 text-4xl">{icon}</div>
       <p className="font-[var(--font-display)] text-lg font-semibold text-slate-900">{title}</p>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[color:var(--muted)]">{description}</p>
+      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
+    </div>
+  );
+}
+
+export function LoadingSpinner({ className }: { className?: string }) {
+  return <Loader2 className={cn("h-5 w-5 animate-spin text-emerald-600", className)} />;
+}
+
+export function SkeletonCard() {
+  return (
+    <div className="surface-card animate-pulse rounded-[1.65rem] p-5 space-y-3">
+      <div className="h-3 w-20 rounded-full bg-slate-200" />
+      <div className="h-7 w-2/3 rounded-full bg-slate-200" />
+      <div className="space-y-2 pt-2">
+        <div className="h-2.5 rounded-full bg-slate-100" />
+        <div className="h-2.5 w-4/5 rounded-full bg-slate-100" />
+        <div className="h-2.5 w-3/5 rounded-full bg-slate-100" />
+      </div>
     </div>
   );
 }
