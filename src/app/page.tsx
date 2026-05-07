@@ -5,9 +5,11 @@ import {
   BadgeDollarSign,
   CheckCircle2,
   CreditCard,
+  Github,
   Landmark,
   MessageCircleMore,
   PackageCheck,
+  Quote,
   ShieldCheck,
   Store,
   Truck,
@@ -58,6 +60,62 @@ const proofPoints = [
   { value: "24/7", label: "buyer ordering through WhatsApp" },
   { value: "Multi-role", label: "views for importers, suppliers, and admins" },
   { value: "Kariakoo", label: "operations model built around real trade flow" },
+];
+
+const testimonials = [
+  {
+    quote: "Before MaliLink we were running three WhatsApp groups, two spreadsheets, and a notebook just to track one container. Now the whole team sees the same picture.",
+    name: "Amina J.",
+    role: "Import Manager",
+    company: "Kariakoo Electronics Hub",
+    initials: "AJ",
+    color: "bg-emerald-600",
+  },
+  {
+    quote: "As a supplier, knowing exactly which orders are confirmed versus still pending has cut the back-and-forth by half. The WhatsApp layer actually works seamlessly.",
+    name: "Hassan M.",
+    role: "Supplier Director",
+    company: "Dar Supply Chain Co.",
+    initials: "HM",
+    color: "bg-amber-600",
+  },
+  {
+    quote: "The TZS-first views are a big deal. We do all our internal reporting in shillings and having the conversion automatic means no more manual conversion mistakes at month-end.",
+    name: "Fatuma N.",
+    role: "Finance Lead",
+    company: "East Africa Trade Group",
+    initials: "FN",
+    color: "bg-sky-600",
+  },
+];
+
+const footerLinks = [
+  {
+    heading: "Product",
+    links: [
+      { label: "Platform", href: "#platform" },
+      { label: "Workflow", href: "#workflow" },
+      { label: "Pricing", href: "#pricing" },
+      { label: "Dashboard", href: "/dashboard" },
+    ],
+  },
+  {
+    heading: "Account",
+    links: [
+      { label: "Sign In", href: "/login" },
+      { label: "Register", href: "/register" },
+      { label: "Settings", href: "/settings" },
+    ],
+  },
+  {
+    heading: "Trade",
+    links: [
+      { label: "Suppliers", href: "/suppliers" },
+      { label: "Orders", href: "/orders" },
+      { label: "Payments", href: "/payments" },
+      { label: "Credit", href: "/credit" },
+    ],
+  },
 ];
 
 const operationsPillars = [
@@ -326,6 +384,34 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section id="testimonials" className="px-5 py-14 sm:px-6">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-10 text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-700">What teams say</p>
+              <h2 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.05em] text-slate-950">
+                Built for the way East African trade actually runs.
+              </h2>
+            </div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {testimonials.map((t) => (
+                <div key={t.name} className="surface-card flex flex-col gap-5 rounded-[1.75rem] p-6">
+                  <Quote className="h-6 w-6 shrink-0 text-emerald-300" />
+                  <p className="flex-1 text-sm leading-7 text-[color:var(--muted)]">&ldquo;{t.quote}&rdquo;</p>
+                  <div className="flex items-center gap-3 border-t border-black/5 pt-4">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${t.color}`}>
+                      {t.initials}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{t.name}</p>
+                      <p className="text-xs text-[color:var(--muted)]">{t.role} · {t.company}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <PricingSection />
 
         <section className="px-5 pb-16 pt-6 sm:px-6">
@@ -357,6 +443,62 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
+
+      <footer className="border-t border-black/5 bg-[#faf6ee]/80 px-5 py-12 sm:px-6">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-bold text-white">
+                  ML
+                </div>
+                <div>
+                  <div className="font-[var(--font-display)] text-lg font-bold tracking-[-0.05em] text-emerald-800">MaliLink</div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted-soft)]">Trade Operating System</div>
+                </div>
+              </div>
+              <p className="mt-4 max-w-xs text-sm leading-7 text-[color:var(--muted)]">
+                B2B trade management built for Kariakoo wholesalers. WhatsApp ordering, TZS-first finance views, and supplier verification in one system.
+              </p>
+              <div className="mt-5 flex items-center gap-3">
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                >
+                  <Github className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+
+            {footerLinks.map((group) => (
+              <div key={group.heading}>
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">{group.heading}</p>
+                <ul className="space-y-2.5">
+                  {group.links.map((link) => (
+                    <li key={link.label}>
+                      <Link href={link.href} className="text-sm text-[color:var(--muted)] hover:text-slate-950">
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col items-center justify-between gap-4 border-t border-black/5 pt-8 sm:flex-row">
+            <p className="text-sm text-[color:var(--muted)]">
+              &copy; {new Date().getFullYear()} MaliLink. Built for East African trade teams.
+            </p>
+            <div className="flex items-center gap-5 text-sm text-[color:var(--muted)]">
+              <Link href="/login" className="hover:text-slate-950">Sign In</Link>
+              <Link href="/register" className="hover:text-slate-950">Register</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

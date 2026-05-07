@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { PageHeader, SectionCard, Badge } from "@/components/dashboard-ui";
+import { useToast } from "@/components/toast";
 import { User, Lock, Building2, MapPin, Phone, Mail, CheckCircle2, AlertCircle } from "lucide-react";
 
 type ProfileData = {
@@ -19,8 +20,6 @@ type ProfileData = {
   phoneVerifiedAt: string | null;
   createdAt: string;
 };
-
-type AlertState = { type: "success" | "error"; message: string } | null;
 
 function FieldGroup({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -43,37 +42,20 @@ function InputField(props: React.InputHTMLAttributes<HTMLInputElement>) {
   );
 }
 
-function Alert({ state }: { state: AlertState }) {
-  if (!state) return null;
-  return (
-    <div
-      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${
-        state.type === "success"
-          ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-          : "border border-red-200 bg-red-50 text-red-700"
-      }`}
-    >
-      {state.type === "success" ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
-      {state.message}
-    </div>
-  );
-}
-
 export default function SettingsPage() {
   const { data: session, update } = useSession();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const toast = useToast();
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [location, setLocation] = useState("");
-  const [profileAlert, setProfileAlert] = useState<AlertState>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordAlert, setPasswordAlert] = useState<AlertState>(null);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   useEffect(() => {
@@ -90,7 +72,6 @@ export default function SettingsPage() {
 
   async function handleProfileSave(e: FormEvent) {
     e.preventDefault();
-    setProfileAlert(null);
     setIsSavingProfile(true);
     try {
       const res = await fetch("/api/profile", {
@@ -100,14 +81,14 @@ export default function SettingsPage() {
       });
       const payload = await res.json();
       if (!res.ok) {
-        setProfileAlert({ type: "error", message: typeof payload.error === "string" ? payload.error : "Update failed." });
+        toast.error("Update failed", typeof payload.error === "string" ? payload.error : undefined);
       } else {
         setProfile((p) => (p ? { ...p, ...payload.user } : p));
-        setProfileAlert({ type: "success", message: "Profile updated successfully." });
+        toast.success("Profile updated", "Your details have been saved.");
         await update({ name: payload.user.name, businessName: payload.user.businessName });
       }
     } catch {
-      setProfileAlert({ type: "error", message: "Network error — please try again." });
+      toast.error("Network error", "Please try again.");
     } finally {
       setIsSavingProfile(false);
     }
@@ -115,9 +96,8 @@ export default function SettingsPage() {
 
   async function handlePasswordSave(e: FormEvent) {
     e.preventDefault();
-    setPasswordAlert(null);
     if (newPassword !== confirmPassword) {
-      setPasswordAlert({ type: "error", message: "New passwords do not match." });
+      toast.error("Passwords do not match", "New password and confirmation must be identical.");
       return;
     }
     setIsSavingPassword(true);
@@ -129,15 +109,15 @@ export default function SettingsPage() {
       });
       const payload = await res.json();
       if (!res.ok) {
-        setPasswordAlert({ type: "error", message: typeof payload.error === "string" ? payload.error : "Password change failed." });
+        toast.error("Password change failed", typeof payload.error === "string" ? payload.error : undefined);
       } else {
-        setPasswordAlert({ type: "success", message: "Password changed successfully." });
+        toast.success("Password changed", "Your new password is active.");
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       }
     } catch {
-      setPasswordAlert({ type: "error", message: "Network error — please try again." });
+      toast.error("Network error", "Please try again.");
     } finally {
       setIsSavingPassword(false);
     }
@@ -241,7 +221,6 @@ export default function SettingsPage() {
               autoComplete="address-level2"
             />
           </FieldGroup>
-          <Alert state={profileAlert} />
           <button
             type="submit"
             disabled={isSavingProfile}
@@ -285,7 +264,6 @@ export default function SettingsPage() {
               />
             </FieldGroup>
           </div>
-          <Alert state={passwordAlert} />
           <button
             type="submit"
             disabled={isSavingPassword}

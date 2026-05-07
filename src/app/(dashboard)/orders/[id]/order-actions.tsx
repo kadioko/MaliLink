@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Loader2 } from "lucide-react";
 import { Badge } from "@/components/dashboard-ui";
+import { useToast } from "@/components/toast";
 
 const STATUS_TRANSITIONS: Record<string, { next: string; label: string; tone: "success" | "warning" | "info" }> = {
   SUBMITTED:  { next: "CONFIRMED",   label: "Confirm Order",     tone: "success" },
@@ -24,8 +25,8 @@ type OrderActionsProps = {
 
 export function OrderActions({ orderId, currentStatus, role }: OrderActionsProps) {
   const router = useRouter();
+  const toast = useToast();
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const transition = STATUS_TRANSITIONS[currentStatus];
   const canAdvance = (role === "SUPPLIER" || role === "ADMIN") && !!transition;
@@ -33,7 +34,6 @@ export function OrderActions({ orderId, currentStatus, role }: OrderActionsProps
 
   async function updateStatus(newStatus: string) {
     setIsLoading(newStatus);
-    setError(null);
     try {
       const res = await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
@@ -42,12 +42,13 @@ export function OrderActions({ orderId, currentStatus, role }: OrderActionsProps
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Status update failed.");
+        toast.error("Status update failed", data.error ?? undefined);
       } else {
+        toast.success("Order updated", `Status changed to ${newStatus.toLowerCase().replace("_", " ")}.`);
         router.refresh();
       }
     } catch {
-      setError("Network error — please try again.");
+      toast.error("Network error", "Please try again.");
     } finally {
       setIsLoading(null);
     }
@@ -89,9 +90,6 @@ export function OrderActions({ orderId, currentStatus, role }: OrderActionsProps
         </button>
       ) : null}
 
-      {error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>
-      ) : null}
     </div>
   );
 }

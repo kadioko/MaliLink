@@ -179,7 +179,21 @@ export function PaymentsClientPage({ role, initialPayments, initialUnpaidOrders 
                 </table>
               </ResponsiveTable>
             ) : (
-              <EmptyState icon="💳" title="No payments recorded yet" description="Payment history will appear here once orders begin settling." />
+              <EmptyState
+                icon="💳"
+                title="No payments recorded yet"
+                description={role === "IMPORTER" ? "Place an order and complete payment to see your history here." : "Payment records will appear here once orders begin settling."}
+                action={
+                  role === "IMPORTER" ? (
+                    <a
+                      href="/orders?new=1"
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+                    >
+                      Place an Order
+                    </a>
+                  ) : undefined
+                }
+              />
             )}
           </SectionCard>
         </div>

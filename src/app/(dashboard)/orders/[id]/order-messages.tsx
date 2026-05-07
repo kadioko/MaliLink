@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
+import { useToast } from "@/components/toast";
 
 type Message = {
   id: string;
@@ -23,6 +24,7 @@ export function OrderMessages({ orderId, currentUserId, currentUserRole, initial
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const toast = useToast();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,9 +55,13 @@ export function OrderMessages({ orderId, currentUserId, currentUserRole, initial
       if (res.ok) {
         const { message } = await res.json();
         setMessages((prev) => prev.map((m) => (m.id === optimistic.id ? message : m)));
+      } else {
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+        toast.error("Message failed", "Could not send your message.");
       }
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      toast.error("Network error", "Please check your connection and try again.");
     } finally {
       setIsSending(false);
     }
